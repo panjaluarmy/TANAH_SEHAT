@@ -3,124 +3,140 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TanahSehat</title>
+  <title>TanahKu Monitor</title>
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#2e7d32" />
+  <meta name="theme-color" content="#167443" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <style>
-    :root {
-      --bg: #f5f7f2;
-      --card: #ffffff;
-      --line: #dfe7d8;
-      --text: #1f2a20;
-      --muted: #5f6f61;
-      --accent: #2e7d32;
-      --ok: #2e7d32;
-      --warn: #f39c12;
-      --bad: #d64545;
-      --off: #9aa39d;
-      --shadow: 0 10px 28px rgba(24, 39, 18, 0.08);
-    }
-
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: var(--bg); color: var(--text); }
-    body { min-height: 100vh; }
-    main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
-    header { margin-bottom: 18px; }
-    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 3vw, 2.9rem); }
-    .sub { margin: 0; color: var(--muted); }
-
-    .bar {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
-      margin: 16px 0;
-    }
-    .bar label { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-    select, button, input { font: inherit; }
-    select, button {
-      border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--text); padding: 10px 12px;
-      box-shadow: var(--shadow);
-    }
-    button { cursor: pointer; background: linear-gradient(180deg, #edf7ea, #dff1dd); }
-    button:disabled { opacity: 0.65; cursor: not-allowed; }
-    .status { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
-    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; background: var(--off); }
-    .dot.on { background: var(--ok); box-shadow: 0 0 0 4px rgba(46,125,50,.12); }
-    .dot.off { background: var(--bad); }
-
-    .stress {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
-      padding: 18px 20px;
-    }
-    .big { display: flex; flex-direction: column; }
-    #sv { font-size: clamp(2.1rem, 5vw, 4rem); font-weight: 800; }
-    #sl { color: var(--muted); }
-    .meter { width: min(100%, 420px); height: 18px; background: rgba(0,0,0,.06); border-radius: 999px; overflow: hidden; }
-    .meter i { display: block; height: 100%; width: 0; transition: width .3s ease, background .3s ease; }
-
-    .grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px;
-      margin: 18px 0 22px;
-    }
-    .s {
-      background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 14px; box-shadow: var(--shadow);
-    }
-    .s h3 { margin: 0 0 12px; font-size: 0.98rem; color: var(--muted); }
-    .v { display: flex; align-items: baseline; gap: 8px; }
-    .v b { font-size: 1.8rem; }
-    .v span { color: var(--muted); }
-    .chip {
-      display: inline-block; margin-top: 12px; padding: 7px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700;
-      background: #e9efe4; color: var(--text);
-    }
-    .chip.ok { background: rgba(46,125,50,.12); color: var(--ok); }
-    .chip.warn { background: rgba(243,156,18,.12); color: var(--warn); }
-    .chip.bad { background: rgba(214,69,69,.12); color: var(--bad); }
-
-    .card {
-      background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; box-shadow: var(--shadow);
-      margin-top: 8px;
-    }
-    .diag p { margin: 0.4rem 0; line-height: 1.6; }
-    .diag strong.ok { color: var(--ok); }
-    .diag strong.warn { color: var(--warn); }
-    .diag strong.bad { color: var(--bad); }
-
-    .note { color: var(--muted); font-size: 0.9rem; }
-    .ai { border-radius: 12px; padding: 16px; background: #f8faf7; border: 1px solid var(--line); line-height: 1.7; white-space: pre-wrap; }
-    .ai.err { background: #fff2f2; border-color: #f3c4c4; color: var(--bad); }
-
-    canvas { width: 100%; height: 260px; display: block; background: #fff; border-radius: 12px; }
-    h2 { margin: 26px 0 8px; }
-    .bar .note { margin-left: auto; }
-
-    @media (max-width: 640px) {
-      .bar { align-items: flex-start; }
-      .bar > * { width: 100%; }
-      .bar label { justify-content: space-between; }
-      .bar .note { margin-left: 0; }
-    }
+    :root { --bg:#f1f8f2; --card:#fff; --line:#dfebe1; --text:#183527; --muted:#6b7b71; --accent:#167443; --accent-dark:#105b35; --ok:#16834a; --warn:#bd790b; --bad:#bf4a38; --off:#9aa39d; --shadow:0 12px 30px rgba(26,66,42,.08); }
+    * { box-sizing:border-box; }
+    html,body { margin:0; min-height:100%; font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; background:radial-gradient(ellipse at 50% 0,#e1f8e6 0,var(--bg) 62%); color:var(--text); }
+    body { min-height:100vh; }
+    button,select,input { font:inherit; }
+    button { cursor:pointer; }
+    button:disabled { cursor:not-allowed; opacity:.65; }
+    main { width:min(1180px,100%); margin:0 auto; padding:24px 20px 36px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; padding:14px 18px; border:1px solid #e0efe2; border-radius:20px; background:linear-gradient(105deg,#c8f2d2,#f1f8cb); }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand-icon,.heading-icon { display:grid; place-items:center; flex:0 0 auto; color:#fff; background:var(--accent); }
+    .brand-icon { width:42px; height:42px; border-radius:13px; }
+    .brand-icon svg { width:23px; height:23px; }
+    h1 { margin:0; font-size:1.2rem; letter-spacing:-.025em; }
+    .sub,.muted { color:var(--muted); }
+    .sub { margin:3px 0 0; font-size:.82rem; }
+    .top-status { display:flex; align-items:center; gap:18px; font-size:.8rem; }
+    .status { display:inline-flex; align-items:center; gap:7px; color:var(--accent-dark); font-weight:700; }
+    .dot { width:9px; height:9px; border-radius:50%; background:var(--off); }
+    .dot.on { background:var(--ok); box-shadow:0 0 0 4px rgba(22,131,74,.12); }
+    .dot.off { background:var(--bad); }
+    .updated { color:var(--muted); }
+    .toolbar { display:flex; align-items:center; justify-content:flex-end; gap:10px; margin:0 0 15px; }
+    select,input { min-height:40px; padding:8px 11px; border:1px solid var(--line); border-radius:11px; color:var(--text); background:#fff; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:40px; padding:9px 14px; border:1px solid transparent; border-radius:11px; color:#fff; background:var(--accent); font-weight:700; box-shadow:0 5px 12px rgba(22,116,67,.12); }
+    .btn:hover { background:var(--accent-dark); }
+    .btn.secondary { color:var(--accent-dark); border-color:var(--line); background:#fff; box-shadow:none; }
+    .btn.secondary:hover { border-color:#a7ccb1; background:#f4faf5; }
+    .btn.small { min-height:34px; padding:7px 11px; font-size:.82rem; }
+    .sensor-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    .sensor-card,.panel,.journal-card,.history-card { border:1px solid #e4eee5; border-radius:19px; background:var(--card); box-shadow:var(--shadow); }
+    .sensor-card { min-width:0; padding:17px 18px 14px; }
+    .sensor-top,.panel-heading,.reader-header,.reader-meta,.range-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .sensor-top h2 { margin:0; font-size:.92rem; }
+    .sensor-value { display:flex; align-items:baseline; gap:2px; margin:8px 0 12px; color:#1d5d40; }
+    .sensor-value b { font-size:clamp(2rem,4vw,2.55rem); line-height:1; letter-spacing:-.055em; }
+    .sensor-value span { font-size:1.1rem; font-weight:700; }
+    .sensor-state,.fit-badge { flex:0 0 auto; padding:5px 9px; border-radius:999px; color:var(--ok); background:#e8f7ed; font-size:.7rem; font-weight:800; }
+    .sensor-state.warn,.fit-badge.warn { color:#93600a; background:#fff2d6; }
+    .sensor-state.bad,.fit-badge.bad { color:#9e3b2d; background:#ffebe6; }
+    .sensor-track { position:relative; height:7px; overflow:hidden; border-radius:99px; background:#edf2ed; }
+    .sensor-track .ideal-band { position:absolute; top:0; bottom:0; border-radius:inherit; background:#9bdfb0; }
+    .sensor-track .sensor-fill { position:absolute; top:-2px; width:9px; height:11px; border:2px solid #fff; border-radius:99px; background:var(--accent-dark); box-shadow:0 0 0 1px var(--accent-dark); transform:translateX(-50%); transition:left .3s ease; }
+    .range-row { margin-top:7px; color:var(--muted); font-size:.65rem; }
+    .range-row .ideal-label { text-align:center; }
+    .stress-inline { display:flex; align-items:center; gap:12px; margin-top:11px; padding:9px 13px; border:1px solid #e1ece3; border-radius:13px; background:rgba(255,255,255,.75); }
+    .stress-inline strong { white-space:nowrap; font-size:.8rem; }
+    #sv { font-weight:800; }
+    #sl { color:var(--muted); font-size:.76rem; }
+    .meter { height:6px; flex:1; overflow:hidden; border-radius:99px; background:#edf2ed; }
+    .meter i { display:block; width:0; height:100%; transition:width .3s ease,background .3s ease; }
+    .analysis-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:15px; margin-top:15px; }
+    .panel { min-width:0; padding:19px; }
+    .panel-heading { justify-content:flex-start; align-items:flex-start; margin-bottom:14px; }
+    .heading-icon { width:34px; height:34px; border-radius:11px; color:var(--accent); background:#e7f7eb; }
+    .heading-icon.amber { color:#9c7017; background:#fff5dc; }
+    .heading-icon svg { width:18px; height:18px; }
+    .panel-heading h2,.journal-heading h2 { margin:0; font-size:1.02rem; }
+    .panel-heading p { margin:4px 0 0; color:var(--muted); font-size:.77rem; line-height:1.4; }
+    .panel-action { display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-bottom:12px; }
+    .auto-label { display:inline-flex; align-items:center; gap:7px; color:var(--muted); font-size:.76rem; }
+    .auto-label input { min-height:auto; accent-color:var(--accent); }
+    .ai-output,.crop-summary { min-height:115px; padding:13px 14px; border:1px solid #e5f1e7; border-radius:13px; background:#f0faf2; font-size:.82rem; line-height:1.6; white-space:pre-wrap; }
+    .ai-output.err { border-color:#f3c4c4; color:var(--bad); background:#fff2f2; }
+    .output-label { margin:0 0 8px; color:var(--muted); font-size:.66rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+    .crop-switch { display:flex; flex-wrap:wrap; gap:7px; }
+    .crop-switch button { min-height:34px; padding:7px 12px; border:1px solid var(--line); border-radius:999px; color:var(--text); background:#fff; font-size:.78rem; font-weight:700; }
+    .crop-switch button[aria-pressed="true"] { border-color:var(--accent); color:#fff; background:var(--accent); }
+    .crop-switch button.add-crop { border-style:dashed; color:var(--muted); }
+    .custom-crop-form { display:grid; grid-template-columns:repeat(3,minmax(75px,1fr)); gap:8px; margin:10px 0; padding:11px; border:1px solid var(--line); border-radius:12px; background:#fafcf9; }
+    .custom-crop-form[hidden] { display:none; }
+    .custom-crop-form label { display:grid; gap:4px; color:var(--muted); font-size:.68rem; }
+    .custom-crop-form .crop-name { grid-column:1/-1; }
+    .custom-crop-form .range-pair { display:flex; gap:4px; }
+    .custom-crop-form input { width:100%; min-width:0; min-height:34px; padding:5px 7px; font-size:.78rem; }
+    .custom-crop-form .form-actions,.custom-crop-form .form-error { grid-column:1/-1; }
+    .form-error { margin:0; color:var(--bad); font-size:.76rem; }
+    .crop-result-head { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+    .crop-result-head .output-label { margin:0; }
+    .recommendation-row { display:grid; grid-template-columns:minmax(92px,.7fr) minmax(0,1.4fr); gap:10px; padding:7px 0; border-top:1px solid #e1eee3; font-size:.75rem; line-height:1.45; }
+    .recommendation-row strong { color:#304b3b; }
+    .recommendation-row span { color:#506357; }
+    .journal-card { margin-top:15px; padding:18px; }
+    .journal-heading { display:flex; align-items:center; gap:10px; margin-bottom:5px; }
+    .journal-heading p { margin:4px 0 12px; color:var(--muted); font-size:.76rem; }
+    .journal-tabs { display:flex; flex-wrap:wrap; gap:7px; margin:10px 0; }
+    .journal-tabs button { padding:7px 11px; border:1px solid var(--line); border-radius:999px; color:#385345; background:#fff; font-size:.72rem; font-weight:700; }
+    .journal-tabs button[aria-pressed="true"] { border-color:var(--accent-dark); color:#fff; background:var(--accent-dark); }
+    .reader { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(250px,.8fr); gap:15px; padding:14px; border-radius:15px; color:#e9f4eb; background:#154e32; }
+    .pdf-panel { display:flex; min-height:335px; flex-direction:column; overflow:hidden; border:1px solid rgba(255,255,255,.16); border-radius:10px; background:#103f29; }
+    .reader-header { min-height:37px; padding:6px 10px; color:#e3f2e7; font-size:.7rem; }
+    .reader-header .reader-tools { display:flex; align-items:center; gap:7px; }
+    .reader-tools button,.reader-tools a { display:inline-flex; align-items:center; justify-content:center; min-width:26px; min-height:25px; padding:4px 7px; border:1px solid rgba(255,255,255,.18); border-radius:7px; color:inherit; background:rgba(255,255,255,.09); text-decoration:none; font-size:.7rem; }
+    .pdf-frame { width:100%; min-height:295px; flex:1; border:0; background:#f5f7f5; }
+    .pdf-empty { display:grid; min-height:295px; place-content:center; gap:8px; padding:22px; color:#345241; background:#f5f8f5; text-align:center; font-size:.85rem; }
+    .pdf-empty p { max-width:400px; margin:0 auto; color:var(--muted); line-height:1.5; }
+    .reader-notes { display:grid; align-content:start; gap:10px; }
+    .reader-note { padding:12px; border:1px solid rgba(255,255,255,.13); border-radius:10px; background:rgba(255,255,255,.07); }
+    .reader-note h3 { margin:0 0 7px; color:#b7d2c0; font-size:.64rem; letter-spacing:.05em; }
+    .reader-note p { margin:0; font-size:.78rem; line-height:1.55; }
+    .highlight-key { display:inline-block; width:9px; height:9px; margin-right:5px; border-radius:2px; background:#f8d85c; }
+    .history-card { margin-top:15px; padding:16px 18px; }
+    .history-card summary { cursor:pointer; font-weight:800; }
+    .history-card .bar { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0; }
+    .history-card .bar label { display:flex; align-items:center; gap:8px; font-size:.82rem; font-weight:600; }
+    canvas { display:block; width:100%; height:240px; border-radius:10px; background:#fff; }
+    .disclaimer { margin:18px 0 0; color:var(--muted); text-align:center; font-size:.72rem; line-height:1.5; }
+    @media (max-width:800px) { main { padding:15px 13px 28px; } .analysis-grid { grid-template-columns:1fr; } .reader { grid-template-columns:1fr; } .reader-notes { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (max-width:560px) { .topbar { align-items:flex-start; flex-direction:column; padding:13px; } .top-status { width:100%; justify-content:space-between; gap:8px; } .toolbar { align-items:stretch; flex-wrap:wrap; } .toolbar>* { flex:1 1 145px; } .sensor-grid { grid-template-columns:1fr; gap:9px; } .sensor-card { padding:14px; } .sensor-value { margin:7px 0 9px; } .sensor-value b { font-size:2rem; } .panel { padding:15px; } .custom-crop-form { grid-template-columns:repeat(2,minmax(0,1fr)); } .reader-notes { grid-template-columns:1fr; } .pdf-panel { min-height:260px; } .pdf-frame,.pdf-empty { min-height:220px; } .stress-inline { flex-wrap:wrap; } .stress-inline .meter { min-width:100%; order:2; } .recommendation-row { grid-template-columns:1fr; gap:2px; } }
   </style>
 </head>
 <body>
   <main>
-    <header>
-      <h1>TanahSehat</h1>
-      <p class="sub">Monitoring kelembapan, pH, dan suhu tanah dari ESP32 lewat Firebase.</p>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-14 3-14 10a6 6 0 0 0 6 6c7 0 10-6 8-16Z"/><path d="M4 21c3-5 7-8 12-11"/></svg></span>
+        <div><h1>TanahKu Monitor</h1><p class="sub">Lahan A · Sensor tanah real-time</p></div>
+      </div>
+      <div class="top-status">
+        <span class="status"><i id="dot" class="dot"></i><span id="stat">Menyiapkan sensor...</span></span>
+        <span id="updated" class="updated">Belum ada data</span>
+      </div>
     </header>
 
-    <div class="bar">
-      <label>Tanaman
-        <select id="crop">
-          <option>Padi</option>
-          <option>Cabai</option>
-          <option>Jagung</option>
-        </select>
-      </label>
-      <span class="status"><i id="dot" class="dot"></i><span id="stat">Menghubungkan...</span></span>
-      <button id="simBtn" type="button">Mulai simulasi</button>
-      <select id="scenario" title="Skenario simulasi">
+    <div class="toolbar" aria-label="Kontrol data sensor">
+      <button id="simBtn" class="btn" type="button">Mulai simulasi</button>
+      <select id="scenario" title="Pilih variasi data simulasi">
         <option value="normal">Skenario: Normal</option>
         <option value="kering">Skenario: Tanah kering</option>
         <option value="asam">Skenario: Tanah asam</option>
@@ -128,37 +144,102 @@
       </select>
     </div>
 
-    <section class="card stress" aria-live="polite">
-      <div class="big">
-        <span id="sv">--</span>
-        <small id="sl">Indeks stres tanah</small>
-      </div>
+    <section class="sensor-grid" id="grid" aria-label="Pembacaan sensor"></section>
+    <section class="stress-inline" aria-live="polite">
+      <strong>Indeks stres <span id="sv">--</span>/100</strong>
+      <span id="sl">Menunggu data sensor</span>
       <div class="meter"><i id="meter"></i></div>
     </section>
 
-    <section class="grid" id="grid"></section>
+    <section class="analysis-grid">
+      <article class="panel">
+        <div class="panel-heading">
+          <span class="heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-8"/><path d="M7 12a5 5 0 0 1 10 0"/><path d="M5 8a7 7 0 0 1 14 0"/><path d="M9 20h6"/></svg></span>
+          <div><h2>Analisis AI Kondisi Tanah</h2><p>Jabarkan data sensor dan cari tanaman yang cocok.</p></div>
+        </div>
+        <div class="panel-action">
+          <button id="aiBtn" class="btn small" type="button">Jabarkan &amp; sarankan tanaman</button>
+          <label class="auto-label"><input type="checkbox" id="aiAuto"> Otomatis tiap 10 menit</label>
+          <span id="aiMeta" class="muted" style="font-size:.72rem"></span>
+        </div>
+        <div id="aiOut" class="ai-output" aria-live="polite"><p class="output-label">Analisis kondisi sensor</p>Mulai simulasi atau tunggu data sensor, lalu minta analisis AI.</div>
+      </article>
 
-    <h2>Diagnosis dan rekomendasi</h2>
-    <section class="card diag" id="diag"><p>Menunggu data dari alat...</p></section>
-
-    <h2>Analisis AI</h2>
-    <section class="card">
-      <div class="bar" style="margin-top:0">
-        <button id="aiBtn">Analisis sekarang</button>
-        <label><input type="checkbox" id="aiAuto"> Otomatis tiap 10 menit</label>
-        <span class="note" id="aiMeta" style="margin:0"></span>
-      </div>
-      <div id="aiOut" class="ai">Tekan tombol untuk meminta AI menafsirkan kondisi tanah.</div>
+      <article class="panel">
+        <div class="panel-heading">
+          <span class="heading-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M8 13c-3-1-4-4-3-7 4 0 7 2 7 6"/><path d="M13 11c0-4 3-7 7-7 1 4-1 8-6 9"/></svg></span>
+          <div><h2>Saran untuk Tanaman Pilihan</h2><p>Pilih tanaman yang ingin ditanam, AI menilai kecocokannya.</p></div>
+        </div>
+        <div id="cropSwitch" class="crop-switch" role="group" aria-label="Pilih tanaman">
+          <button type="button" data-crop="Padi" aria-pressed="true">Padi</button>
+          <button type="button" data-crop="Jagung" aria-pressed="false">Jagung</button>
+          <button type="button" data-crop="Cabai" aria-pressed="false">Cabai</button>
+          <button id="addCropBtn" class="add-crop" type="button" aria-expanded="false">+ Tanaman lain</button>
+        </div>
+        <form id="customCropForm" class="custom-crop-form" hidden>
+          <label class="crop-name">Nama tanaman
+            <input id="customCropName" maxlength="30" placeholder="Contoh: Kedelai" autocomplete="off">
+          </label>
+          <label>Kelembapan (%)<span class="range-pair"><input id="customMoistMin" type="number" min="0" max="100" step="1" placeholder="Min"><input id="customMoistMax" type="number" min="0" max="100" step="1" placeholder="Maks"></span></label>
+          <label>pH tanah<span class="range-pair"><input id="customPhMin" type="number" min="0" max="14" step="0.1" placeholder="Min"><input id="customPhMax" type="number" min="0" max="14" step="0.1" placeholder="Maks"></span></label>
+          <label>Suhu tanah (°C)<span class="range-pair"><input id="customTempMin" type="number" min="-10" max="60" step="0.1" placeholder="Min"><input id="customTempMax" type="number" min="-10" max="60" step="0.1" placeholder="Maks"></span></label>
+          <div class="form-actions"><button class="btn small" type="submit">Gunakan rentang ini</button></div>
+          <p id="customCropError" class="form-error" role="alert"></p>
+        </form>
+        <div class="panel-action" style="margin-top:11px">
+          <button id="cropAiBtn" class="btn small" type="button">Minta saran untuk Padi</button>
+          <span id="cropAiMeta" class="muted" style="font-size:.72rem"></span>
+        </div>
+        <div id="diag" class="crop-summary" aria-live="polite"><p class="output-label">Contoh saran tanaman</p>Menunggu data sensor untuk dibandingkan dengan kebutuhan tanaman.</div>
+        <div id="cropAiOut" class="ai-output" aria-live="polite" style="margin-top:9px"><p class="output-label">Saran AI</p>Tekan tombol untuk meminta analisis khusus tanaman.</div>
+      </article>
     </section>
 
-    <h2>Riwayat</h2>
-    <div class="bar">
-      <label>Parameter <select id="param"></select></label>
-      <button id="csv">Unduh riwayat (CSV)</button>
-    </div>
-    <section class="card"><canvas id="chart"></canvas></section>
+    <section class="journal-card" aria-labelledby="journalTitle">
+      <div class="journal-heading">
+        <span class="heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 13h8M8 17h8"/></svg></span>
+        <div><h2 id="journalTitle">Pembaca Jurnal</h2><p>Pilih jurnal dan unggah PDF untuk membacanya langsung di dashboard.</p></div>
+      </div>
+      <div id="journalTabs" class="journal-tabs" role="tablist" aria-label="Jurnal referensi">
+        <button type="button" role="tab" data-journal="soil" aria-pressed="true">[1] Kondisi tanah</button>
+        <button type="button" role="tab" data-journal="rice" aria-pressed="false">[2] Budidaya padi</button>
+        <button type="button" role="tab" data-journal="irrigation" aria-pressed="false">[3] Irigasi &amp; mulsa</button>
+      </div>
+      <input id="journalFile" type="file" accept="application/pdf,.pdf" hidden>
+      <div class="reader">
+        <div class="pdf-panel">
+          <div class="reader-header">
+            <span id="journalFileName">PDF jurnal belum dipilih</span>
+            <span class="reader-tools">
+              <span id="journalPage">PDF</span>
+              <a id="journalFull" href="#" target="_blank" rel="noopener" aria-label="Buka PDF di tab baru">↗</a>
+            </span>
+          </div>
+          <div id="pdfEmpty" class="pdf-empty">
+            <strong>Belum ada file jurnal untuk ditampilkan.</strong>
+            <p>PDF referensi tidak disertakan bersama dashboard. Pilih file jurnal yang sesuai agar bisa dibaca di sini.</p>
+            <button id="chooseJournalBtn" class="btn small" type="button">Pilih file jurnal PDF</button>
+          </div>
+          <iframe id="pdfFrame" class="pdf-frame" title="Pratinjau jurnal PDF" hidden></iframe>
+        </div>
+        <div class="reader-notes">
+          <div class="reader-note"><h3>SUMBER TERPILIH</h3><p id="journalDescription">Jurnal kondisi tanah — unggah PDF milik Anda untuk melihat dokumen ini.</p></div>
+          <div class="reader-note"><h3>BAGIAN DI JURNAL</h3><p><span class="highlight-key" aria-hidden="true"></span>Tandai bagian relevan pada dokumen<br><span class="muted">Rujuk nomor halaman dan penulis pada PDF asli.</span></p></div>
+          <div class="reader-note"><h3>CATATAN PEMBACA</h3><p>Panel ini hanya menampilkan dokumen yang Anda pilih. Dashboard tidak mengarang isi atau kutipan jurnal.</p></div>
+          <div><button id="journalFullBtn" class="btn secondary small" type="button" disabled>Buka jurnal layar penuh</button></div>
+        </div>
+      </div>
+    </section>
 
-    <p class="note">Ambang tiap tanaman bersifat ilustratif. Sesuaikan dengan referensi penelitian Anda.</p>
+    <details class="history-card" id="history">
+      <summary>Riwayat pembacaan sensor</summary>
+      <div class="bar">
+        <label>Parameter <select id="param"></select></label>
+        <button id="csv" class="btn secondary" type="button">Unduh riwayat (CSV)</button>
+      </div>
+      <canvas id="chart" aria-label="Grafik riwayat sensor"></canvas>
+    </details>
+    <p class="disclaimer">Tampilan contoh menggunakan data simulasi sensor selama hardware belum tersedia. Saran AI bersifat rekomendasi awal, bukan pengganti uji laboratorium atau pendampingan ahli pertanian. Rentang tanaman dapat disesuaikan dengan referensi lahan Anda.</p>
   </main>
 
   <script>
@@ -172,9 +253,16 @@
     const ONLINE_MS = 30000;
 
     const CROPS = {
-      Padi:   { moist: [60, 90], ph: [5.5, 6.5], temp: [20, 35] },
+      Padi:   { moist: [60, 80], ph: [5.5, 6.5], temp: [25, 37] },
       Cabai:  { moist: [50, 70], ph: [6, 6.8],   temp: [18, 30] },
       Jagung: { moist: [50, 75], ph: [5.8, 7],   temp: [20, 32] },
+    };
+    const BUILTIN_CROPS = new Set(Object.keys(CROPS));
+
+    const SENSOR_GUIDES = {
+      moist: { scale: [0, 100], ideal: [60, 80], label: "Ideal umum 60–80%" },
+      ph: { scale: [0, 14], ideal: [6, 7], label: "Mendekati netral" },
+      temp: { scale: [0, 50], ideal: [25, 37], label: "Ideal umum 25–37°C" },
     };
 
     const SENS = [
@@ -184,18 +272,16 @@
     ];
 
     const WEIGHTS = { moist: 1 / 3, ph: 1 / 3, temp: 1 / 3 };
-    const REC = {
-      moist: ["Perlu penyiraman atau perbaiki irigasi.", "Tanah terlalu basah, perbaiki drainase."],
-      ph: ["Tanah terlalu asam, tambahkan kapur dolomit.", "Tanah terlalu basa, tambahkan bahan organik atau belerang."],
-      temp: ["Suhu tanah terlalu rendah; periksa kondisi lingkungan dan pertumbuhan tanaman.", "Suhu tanah terlalu tinggi; jaga kelembapan dan lindungi tanah dari panas berlebih."],
-    };
-
     const $ = (id) => document.getElementById(id);
-    const cropR = () => CROPS[$("crop").value];
+    let selectedCrop = "Padi";
+    const cropR = () => Object.prototype.hasOwnProperty.call(CROPS, selectedCrop) ? CROPS[selectedCrop] : null;
     const valid = (o) => o && SENS.every((s) => typeof o[s.k] === "number" && Number.isFinite(o[s.k]));
     const pickData = (o) => Object.fromEntries(SENS.map((s) => [s.k, o[s.k]]));
     let latest = null, hist = [];
-    let aiBusy = false, aiTimer = null;
+    const aiBusy = { general: false, crop: false };
+    const aiControllers = { general: null, crop: null };
+    let aiTimer = null, selectedJournal = "soil";
+    const journalUrls = {};
     let simMode = false, simTimer = null, lastSimHistory = 0;
 
     function dev(v, r) {
@@ -211,21 +297,52 @@
       const stat = $("stat");
       dot.className = "dot " + (on === null ? "" : on ? "on" : "off");
       stat.textContent = text;
+      $("updated").textContent = latest
+        ? "Diperbarui " + new Date(latest.ts || Date.now()).toLocaleTimeString("id-ID")
+        : "Belum ada data";
     }
 
     function buildUI() {
-      $("grid").innerHTML = SENS.map((s) => `
-        <div class="s">
-          <h3>${s.n}</h3>
-          <div class="v"><b id="v_${s.k}">--</b><span>${s.u}</span></div>
-          <span class="chip" id="c_${s.k}"></span>
-        </div>
-      `).join("");
+      $("grid").innerHTML = SENS.map((s) => {
+        const guide = SENSOR_GUIDES[s.k];
+        const scale = guide.scale[1] - guide.scale[0];
+        const bandLeft = ((guide.ideal[0] - guide.scale[0]) / scale) * 100;
+        const bandWidth = ((guide.ideal[1] - guide.ideal[0]) / scale) * 100;
+        return `
+          <article class="sensor-card">
+            <div class="sensor-top"><h2>${s.n}</h2><span class="sensor-state" id="c_${s.k}">Menunggu</span></div>
+            <div class="sensor-value"><b id="v_${s.k}">--</b><span>${s.u}</span></div>
+            <div class="sensor-track" role="img" aria-label="${guide.label}">
+              <i class="ideal-band" style="left:${bandLeft}%;width:${bandWidth}%"></i>
+              <i class="sensor-fill" id="fill_${s.k}" style="left:0%"></i>
+            </div>
+            <div class="range-row"><span>${guide.scale[0]}${s.u}</span><span class="ideal-label">${guide.label}</span><span>${guide.scale[1]}${s.u}</span></div>
+          </article>
+        `;
+      }).join("");
 
       $("param").innerHTML = '<option value="stress">Indeks stres tanah</option>' +
         SENS.map((s) => `<option value="${s.k}">${s.n}</option>`).join("");
 
-      $("crop").onchange = () => { renderLatest(); drawChart(); };
+      $("cropSwitch").addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-crop]");
+        if (button) selectCrop(button.dataset.crop);
+      });
+      $("addCropBtn").onclick = () => {
+        const form = $("customCropForm");
+        form.hidden = !form.hidden;
+        $("addCropBtn").setAttribute("aria-expanded", String(!form.hidden));
+      };
+      $("customCropForm").onsubmit = saveCustomCrop;
+      $("aiBtn").onclick = () => analyzeAI("general");
+      $("cropAiBtn").onclick = () => analyzeAI("crop");
+      $("aiAuto").onchange = (event) => {
+        clearInterval(aiTimer);
+        if (event.target.checked) {
+          analyzeAI("general");
+          aiTimer = setInterval(() => analyzeAI("general"), 10 * 60 * 1000);
+        }
+      };
       $("param").onchange = drawChart;
       $("csv").onclick = downloadCsv;
       $("simBtn").onclick = toggleSimulation;
@@ -235,7 +352,129 @@
         updateSimulation();
         drawChart();
       };
+      $("history").addEventListener("toggle", () => {
+        if ($("history").open) drawChart();
+      });
+      buildJournalUI();
       window.addEventListener("resize", drawChart);
+    }
+
+    function selectCrop(name) {
+      if (!Object.prototype.hasOwnProperty.call(CROPS, name) || selectedCrop === name) return;
+      selectedCrop = name;
+      $("cropSwitch").querySelectorAll("button[data-crop]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.crop === name));
+      });
+      $("cropAiBtn").textContent = "Minta saran untuk " + name;
+      if (aiControllers.crop) {
+        aiControllers.crop.abort();
+        aiControllers.crop = null;
+        aiBusy.crop = false;
+        $("cropAiBtn").disabled = false;
+      }
+      $("cropAiMeta").textContent = "";
+      $("cropAiOut").className = "ai-output";
+      $("cropAiOut").textContent = "Tekan tombol untuk meminta analisis khusus tanaman " + name + ".";
+      renderLatest();
+      drawChart();
+    }
+
+    function saveCustomCrop(event) {
+      event.preventDefault();
+      const name = $("customCropName").value.trim().replace(/[^a-zA-Z0-9 -]/g, "").slice(0, 30);
+      const rangeInputs = Array.from($("customCropForm").querySelectorAll('input[type="number"]'));
+      const ranges = {
+        moist: [Number($("customMoistMin").value), Number($("customMoistMax").value)],
+        ph: [Number($("customPhMin").value), Number($("customPhMax").value)],
+        temp: [Number($("customTempMin").value), Number($("customTempMax").value)],
+      };
+      const limits = { moist: [0, 100], ph: [0, 14], temp: [-10, 60] };
+      const validRanges = rangeInputs.every((input) => input.value.trim() !== "") &&
+        Object.entries(ranges).every(([key, range]) =>
+          range.every(Number.isFinite) &&
+          range[0] >= limits[key][0] &&
+          range[1] <= limits[key][1] &&
+          range[0] < range[1]
+        );
+      if (!name || !validRanges) {
+        $("customCropError").textContent = "Isi nama dan rentang min–maks yang valid untuk ketiga parameter.";
+        return;
+      }
+      if (BUILTIN_CROPS.has(name)) {
+        $("customCropError").textContent = "Nama tersebut sudah memiliki rentang bawaan. Gunakan nama tanaman lain.";
+        return;
+      }
+
+      Object.defineProperty(CROPS, name, { value: ranges, enumerable: true, configurable: true, writable: true });
+      let button = Array.from($("cropSwitch").querySelectorAll("button[data-crop]"))
+        .find((item) => item.dataset.crop === name);
+      if (!button) {
+        button = document.createElement("button");
+        button.type = "button";
+        button.dataset.crop = name;
+        $("cropSwitch").insertBefore(button, $("addCropBtn"));
+      }
+      button.textContent = name;
+      $("customCropError").textContent = "";
+      $("customCropForm").hidden = true;
+      $("addCropBtn").setAttribute("aria-expanded", "false");
+      if (selectedCrop === name) {
+        renderLatest();
+        drawChart();
+      } else {
+        selectCrop(name);
+      }
+    }
+
+    function buildJournalUI() {
+      const descriptions = {
+        soil: "Jurnal kondisi tanah — unggah PDF milik Anda untuk melihat dokumen ini.",
+        rice: "Jurnal budidaya padi — unggah PDF milik Anda untuk melihat dokumen ini.",
+        irrigation: "Jurnal irigasi dan mulsa — unggah PDF milik Anda untuk melihat dokumen ini.",
+      };
+      $("journalTabs").addEventListener("click", (event) => {
+        const tab = event.target.closest("button[data-journal]");
+        if (!tab) return;
+        selectedJournal = tab.dataset.journal;
+        $("journalTabs").querySelectorAll("button[data-journal]").forEach((item) =>
+          item.setAttribute("aria-pressed", String(item === tab))
+        );
+        $("journalDescription").textContent = descriptions[selectedJournal];
+        renderJournal();
+      });
+      $("chooseJournalBtn").onclick = () => $("journalFile").click();
+      $("journalFile").onchange = (event) => {
+        const file = event.target.files[0];
+        event.target.value = "";
+        if (!file) return;
+        if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+          $("journalDescription").textContent = "File tidak dikenali sebagai PDF. Pilih dokumen .pdf.";
+          return;
+        }
+        const previous = journalUrls[selectedJournal];
+        if (previous) URL.revokeObjectURL(previous.url);
+        journalUrls[selectedJournal] = { file, url: URL.createObjectURL(file) };
+        renderJournal();
+      };
+      $("journalFullBtn").onclick = () => {
+        const selected = journalUrls[selectedJournal];
+        if (selected) window.open(selected.url, "_blank", "noopener");
+      };
+      $("journalFull").onclick = (event) => {
+        if (!journalUrls[selectedJournal]) event.preventDefault();
+      };
+      renderJournal();
+    }
+
+    function renderJournal() {
+      const selected = journalUrls[selectedJournal];
+      $("pdfEmpty").hidden = Boolean(selected);
+      $("pdfFrame").hidden = !selected;
+      $("pdfFrame").src = selected ? selected.url + "#toolbar=1&navpanes=0" : "about:blank";
+      $("journalFileName").textContent = selected ? selected.file.name : "PDF jurnal belum dipilih";
+      $("journalFullBtn").disabled = !selected;
+      $("journalFull").href = selected ? selected.url : "#";
+      $("journalFull").tabIndex = selected ? 0 : -1;
     }
 
     function applyScenario(s, phase, wave) {
@@ -254,9 +493,9 @@
     function simulatedSample(ts, phase) {
       const wave = Math.sin(phase);
       const s = {
-        moist: Math.round(59 + wave * 5 + (Math.random() - 0.5) * 2),
-        ph: Number((6 + Math.sin(phase * 0.45) * 0.12).toFixed(1)),
-        temp: Number((26 + Math.sin(phase * 0.2) * 2).toFixed(1)),
+        moist: Math.round(42 + wave * 4 + (Math.random() - 0.5) * 2),
+        ph: Number((6.4 + Math.sin(phase * 0.45) * 0.12).toFixed(1)),
+        temp: Number((29.5 + Math.sin(phase * 0.2) * 2).toFixed(1)),
         ts
       };
       applyScenario(s, phase, wave);
@@ -305,9 +544,11 @@
       $("meter").style.width = "0";
       SENS.forEach((s) => {
         $("v_" + s.k).textContent = "--";
-        $("c_" + s.k).textContent = "";
-        $("c_" + s.k).className = "chip";
+        $("c_" + s.k).textContent = "Menunggu";
+        $("c_" + s.k).className = "sensor-state";
+        $("fill_" + s.k).style.left = "0%";
       });
+      $("sl").textContent = "Menunggu data sensor";
       hist = [];
       drawChart();
       fetchLatest();
@@ -321,27 +562,54 @@
 
       SENS.forEach((s) => {
         const v = latest[s.k];
-        const d = dev(v, r[s.k]);
-        const low = v < r[s.k][0];
+        const guide = SENSOR_GUIDES[s.k];
+        const low = v < guide.ideal[0];
+        const high = v > guide.ideal[1];
         $("v_" + s.k).textContent = v.toFixed(s.d);
         const c = $("c_" + s.k);
-        c.textContent = d === 0 ? "Ideal" : low ? "Rendah" : "Tinggi";
-        c.className = "chip " + lvlClass(d);
-        if (d > 0) issues.push({ s, d, low });
+        if (s.k === "moist") c.textContent = low ? "Agak kering" : high ? "Terlalu basah" : "Ideal umum";
+        else if (s.k === "ph") c.textContent = v < 6 ? "Cenderung asam" : v > 7.5 ? "Cenderung basa" : "Mendekati netral";
+        else c.textContent = low ? "Rendah" : high ? "Tinggi" : "Normal";
+        c.className = "sensor-state " + (low || high ? (Math.abs(v - guide.ideal[low ? 0 : 1]) > (guide.ideal[1] - guide.ideal[0]) * 0.5 ? "bad" : "warn") : "");
+        const pct = Math.max(0, Math.min(100, ((v - guide.scale[0]) / (guide.scale[1] - guide.scale[0])) * 100));
+        $("fill_" + s.k).style.left = pct + "%";
+
+        const cropRange = r[s.k];
+        const cropLow = v < cropRange[0];
+        const cropHigh = v > cropRange[1];
+        if (cropLow || cropHigh) issues.push({ s, low: cropLow });
       });
 
       const st = stressOf(latest, r);
       const cls = st < 20 ? "ok" : st < 45 ? "warn" : "bad";
       $("sv").textContent = Math.round(st);
-      $("sv").style.color = `var(--${cls})`;
-      $("sl").textContent = "Indeks stres tanah: " + (st < 20 ? "Rendah" : st < 45 ? "Sedang" : "Tinggi");
+      $("sv").style.color = cls === "ok" ? "var(--ok)" : cls === "warn" ? "var(--warn)" : "var(--bad)";
+      $("sl").textContent = "Stres " + (st < 20 ? "rendah" : st < 45 ? "sedang" : "tinggi") + " untuk " + selectedCrop;
       $("meter").style.width = Math.min(100, st) + "%";
       $("meter").style.background = `var(--${cls})`;
 
-      $("diag").innerHTML = issues.length
-        ? issues.sort((a, b) => b.d - a.d).map((i) =>
-            `<p><strong class="${lvlClass(i.d)}">${i.s.n} ${i.low ? "rendah" : "tinggi"}.</strong> ${REC[i.s.k][i.low ? 0 : 1]}</p>`).join("")
-        : '<p><strong class="ok">Semua parameter ideal.</strong> Tidak perlu tindakan.</p>';
+      const badge = issues.length ? "Cocok dengan perbaikan" : "Cocok";
+      const badgeClass = issues.length ? "warn" : "";
+      $("diag").innerHTML = `<div class="crop-result-head"><p class="output-label">Contoh saran untuk ${escapeHtml(selectedCrop)}</p><span class="fit-badge ${badgeClass}">${badge}</span></div>` +
+        SENS.map((s) => {
+          const value = latest[s.k];
+          const range = r[s.k];
+          const low = value < range[0];
+          const high = value > range[1];
+          let advice = "Sudah sesuai, tidak perlu dikoreksi.";
+          if (s.k === "moist" && low) advice = `Kurang untuk ${selectedCrop}. Tambah pengairan bertahap hingga rentang ${range[0]}–${range[1]}%.`;
+          else if (s.k === "moist" && high) advice = `Melebihi rentang. Kurangi pengairan dan perbaiki drainase.`;
+          else if (s.k === "ph" && (low || high)) advice = `Di luar rentang pH ${range[0]}–${range[1]}. Uji ulang pH dan koreksi bertahap berdasarkan hasil uji tanah.`;
+          else if (s.k === "temp" && (low || high)) advice = `Di luar rentang ${range[0]}–${range[1]}°C. Periksa kondisi lingkungan dan pembacaan sensor.`;
+          const status = low ? "Kurang" : high ? "Berlebih" : "Sesuai";
+          return `<div class="recommendation-row"><strong>${s.n}<br>${value.toFixed(s.d)}${s.u} · ${status}</strong><span>${advice}</span></div>`;
+        }).join("");
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[char]);
     }
 
     async function getJSON(path) {
@@ -480,33 +748,40 @@
       URL.revokeObjectURL(a.href);
     }
 
-    async function analyzeAI() {
-      const out = $("aiOut");
+    async function analyzeAI(type) {
+      const isGeneral = type === "general";
+      const out = $(isGeneral ? "aiOut" : "cropAiOut");
+      const button = $(isGeneral ? "aiBtn" : "cropAiBtn");
+      const meta = $(isGeneral ? "aiMeta" : "cropAiMeta");
 
       if (!AI_URL || AI_URL.includes("NAMA-WORKER")) {
-        out.className = "ai err";
+        out.className = "ai-output err";
         out.textContent = "Isi AI_URL dengan alamat Cloudflare Worker Anda.";
         return;
       }
 
       if (!valid(latest)) {
-        out.className = "ai err";
-        out.textContent = "Belum ada data dari alat.";
+        out.className = "ai-output err";
+        out.textContent = "Belum ada data dari sensor. Mulai simulasi atau tunggu pembacaan alat.";
         return;
       }
 
-      if (aiBusy) return;
-      aiBusy = true;
-      $("aiBtn").disabled = true;
-      out.className = "ai";
+      if (aiBusy[type]) return;
+      aiBusy[type] = true;
+      button.disabled = true;
+      out.className = "ai-output";
       out.textContent = "AI sedang menganalisis...";
 
+      const requestedCrop = selectedCrop;
+      const ranges = cropR();
+      const controller = new AbortController();
+      aiControllers[type] = controller;
       try {
-        const r = cropR();
         const payload = {
-          crop: $("crop").value,
+          mode: type,
+          crop: isGeneral ? "Semua tanaman" : requestedCrop,
           latest: pickData(latest),
-          stress: stressOf(latest, r),
+          ...(!isGeneral ? { idealRanges: ranges, stress: stressOf(latest, ranges) } : {}),
           history: hist.slice(-60)
             .filter((_, i, a) => i % Math.max(1, Math.floor(a.length / 12)) === 0)
             .slice(-12)
@@ -515,45 +790,44 @@
         const res = await fetch(AI_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
+          signal: controller.signal
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
+        if (!isGeneral && selectedCrop !== requestedCrop) return;
         out.textContent = data.analysis || "(Tidak ada jawaban)";
-        $("aiMeta").textContent = "Dianalisis " + new Date().toLocaleTimeString("id-ID");
+        meta.textContent = "Dianalisis " + new Date().toLocaleTimeString("id-ID");
       } catch (e) {
-        out.className = "ai err";
+        if (e.name === "AbortError") return;
+        out.className = "ai-output err";
         const detail = location.protocol === "file:"
-          ? "Halaman dibuka langsung dari file (file://), sehingga koneksi AI diblokir oleh CORS. Jalankan dari folder proyek dengan `py -m http.server 8132`, lalu buka http://127.0.0.1:8132/tanahsehat_single.html."
+          ? "Halaman dibuka langsung dari file (file://), sehingga koneksi AI diblokir oleh CORS. Tutup tab ini, jalankan Start-TanahSehat.ps1 dari folder proyek, lalu buka http://localhost:8123/tanahsehat_single.html."
           : e.message === "Failed to fetch"
             ? "Koneksi ke AI gagal. Periksa internet, pastikan URL Worker benar dan sudah di-deploy, serta domain halaman diizinkan pada ALLOWED_ORIGINS di Worker."
             : e.message;
         out.textContent = "Analisis gagal: " + detail;
       } finally {
-        setTimeout(() => {
-          aiBusy = false;
-          $("aiBtn").disabled = false;
-        }, 15000);
+        if (aiControllers[type] === controller) {
+          aiControllers[type] = null;
+          aiBusy[type] = false;
+          button.disabled = false;
+        }
       }
     }
-
-    $("aiBtn").onclick = analyzeAI;
-    $("aiAuto").onchange = (e) => {
-      clearInterval(aiTimer);
-      if (e.target.checked) {
-        analyzeAI();
-        aiTimer = setInterval(analyzeAI, 10 * 60 * 1000);
-      }
-    };
 
     if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
       navigator.serviceWorker.register("sw.js").catch(() => {});
     }
 
     buildUI();
-    fetchLatest();
-    fetchHist();
+    if (FIREBASE_URL.includes("NAMA-PROJECT")) {
+      toggleSimulation();
+    } else {
+      fetchLatest();
+      fetchHist();
+    }
     setInterval(fetchLatest, POLL_MS);
     setInterval(fetchHist, HIST_MS);
   </script>

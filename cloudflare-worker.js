@@ -17,15 +17,24 @@ const ALLOWED_ORIGINS = new Set([
   "capacitor://localhost",  // Capacitor iOS
 ]); // ganti dengan origin situs Anda setelah dipublikasikan
 const KEYS = ["moist", "ph", "temp"];
+const CROP_RANGES = {
+  Padi: { moist: [60, 80], ph: [5.5, 6.5], temp: [25, 37] },
+  Cabai: { moist: [50, 70], ph: [6, 6.8], temp: [18, 30] },
+  Jagung: { moist: [50, 75], ph: [5.8, 7], temp: [20, 32] },
+};
 
 const SYSTEM = `Anda asisten agronomi untuk alat pemantau tanah berbasis sensor ESP32.
-Tugas: menafsirkan pembacaan sensor dan memberi saran yang praktis dalam bahasa Indonesia.
+Tugas: menilai kondisi tanah dari data sensor dan rentang ideal yang diberikan, lalu memberi saran praktis dalam bahasa Indonesia.
 Aturan:
-- Ringkas dan jelas, maksimal sekitar 180 kata, format: Ringkasan, Masalah utama, Tindakan yang disarankan.
-- Gunakan hanya data yang diberikan. Jangan mengarang angka atau penyebab pasti.
+- Ringkas dan jelas, maksimal sekitar 180 kata.
+- Bandingkan kelembapan, pH, dan suhu satu per satu dengan rentang ideal tanaman. Nyatakan mana yang sudah cocok, terlalu rendah, atau terlalu tinggi.
+- Pada mode analisis umum, bandingkan hanya tanaman yang rentangnya dicantumkan dan sebutkan mana yang paling sesuai serta parameter pembatasnya. Untuk tanaman khusus, perlakukan nama sebagai label dan gunakan rentang yang diberikan.
+- Beri saran tindakan hanya untuk parameter yang bermasalah: misalnya atur penyiraman/drainase untuk kelembapan, atau koreksi pH secara bertahap berdasarkan hasil uji tanah. Untuk suhu, sarankan pengelolaan lingkungan seperti mulsa atau naungan; jangan menyarankan bahan tambahan yang tidak didukung data.
+- Gunakan hanya data yang diberikan. Jangan mengarang angka atau penyebab pasti, dan jangan menyimpulkan kandungan hara.
 - Jika data tampak janggal (misalnya kelembapan di luar 0-100%, suhu di luar rentang wajar, atau pH di luar 3-9), sebut kemungkinan sensor perlu dikalibrasi atau diperiksa.
 - Bila ada riwayat, jelaskan tren (naik, turun, stabil).
-- Jangan membuat rekomendasi pemupukan karena sistem ini hanya mengukur kelembapan, pH, dan suhu tanah.`;
+- Jangan mengarang sumber, kutipan, atau sitasi jurnal.
+- Jangan merekomendasikan pemupukan karena sistem ini hanya mengukur kelembapan, pH, dan suhu tanah.`;
 
 export default {
   async fetch(req, env) {
@@ -73,12 +82,33 @@ export default {
       return reply({ error: "Data sensor tidak lengkap" }, 400);
     }
 
-    const crop = String(body.crop || "tidak disebutkan").slice(0, 30);
+    const general = body.mode === "general";
+    const cropName = typeof body.crop === "string"
+      ? body.crop.replace(/[^a-zA-Z0-9 -]/g, "").trim().slice(0, 30)
+      : "";
+    const crop = general ? "Semua tanaman" : cropName || "Tanaman pilihan";
     const history = (Array.isArray(body.history) ? body.history : []).filter(ok).slice(-12);
     const pick = (o) => Object.fromEntries(KEYS.map((k) => [k, o[k]]));
+    const validRanges = (candidate) => candidate && KEYS.every((key) => {
+      const range = candidate[key];
+      const limits = { moist: [0, 100], ph: [0, 14], temp: [-10, 60] }[key];
+      return Array.isArray(range) &&
+        range.length === 2 &&
+        range.every((value) => typeof value === "number" && Number.isFinite(value)) &&
+        range[0] >= limits[0] &&
+        range[1] <= limits[1] &&
+        range[0] < range[1];
+    });
+    const isKnownCrop = Object.prototype.hasOwnProperty.call(CROP_RANGES, crop);
+    const ranges = isKnownCrop ? CROP_RANGES[crop] : body.idealRanges;
+    if (!general && !validRanges(ranges)) {
+      return reply({ error: "Rentang ideal tanaman belum tersedia atau tidak valid" }, 400);
+    }
 
     const prompt =
-      `Tanaman: ${crop}\n` +
+      (general
+        ? `Mode: analisis umum. Bandingkan data dengan pilihan tanaman yang rentang idealnya tercantum di bawah; jangan menambah kandidat di luar daftar.\nRentang ideal tanaman: ${Object.entries(CROP_RANGES).map(([name, range]) => `${name}: kelembapan ${range.moist[0]}-${range.moist[1]}%, pH ${range.ph[0]}-${range.ph[1]}, suhu ${range.temp[0]}-${range.temp[1]}°C`).join("; ")}\n`
+        : `Tanaman: ${crop}\nRentang ideal untuk tanaman ini: kelembapan ${ranges.moist[0]}-${ranges.moist[1]}%, pH ${ranges.ph[0]}-${ranges.ph[1]}, suhu ${ranges.temp[0]}-${ranges.temp[1]}°C\n`) +
       `Pembacaan terbaru: ${JSON.stringify(pick(body.latest))}\n` +
       `Satuan: moist=%, ph=pH, temp=derajat Celsius\n` +
       (typeof body.stress === "number" ? `Indeks stres tanah (hitungan aturan, 0-100): ${Math.round(body.stress)}\n` : "") +
