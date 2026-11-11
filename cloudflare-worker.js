@@ -55,6 +55,7 @@ Aturan:
 - Untuk mode general, schema: {"analysis":{"summary":[{"parameter":"nama parameter","statement":"...","evidenceIds":[]}],"suitableCrops":[{"crop":"nama tanaman","parameter":"nama parameter","reason":"...","evidenceIds":[]}],"attention":[{"parameter":"nama parameter","statement":"...","evidenceIds":[]}]}}. Parameter harus tepat moist, ph, atau temp; ringkasan harus punya satu per parameter. Tanaman hanya boleh Padi, Cabai, atau Jagung. Urutkan dari paling sesuai berdasarkan nilai dan rentang ilustratif. Jangan menyatakan rentang ilustratif sebagai ambang jurnal atau jaminan panen.
 - Untuk mode crop, schema: {"analysis":{"statements":[{"parameter":"nama parameter","statement":"...","evidenceIds":[]}],"conclusion":{"statement":"...","evidenceIds":[]}}}. Parameter harus tepat moist, ph, atau temp; beri tepat satu pernyataan per parameter dan satu kesimpulan.
 - Gunakan ID sitasi hanya dari daftar yang diberikan dan hanya bila kutipan mendukung konteks parameter pada pernyataan itu. Untuk setiap pernyataan yang memiliki bukti relevan, sertakan minimal satu ID. Jangan mengarang jurnal, kutipan, atau halaman.
+- Pada mode general, "attention" hanya berisi parameter yang memang perlu diperbaiki; gunakan [] bila tidak ada. Jangan memasukkan sitasi yang tidak ada di daftar izin untuk parameter terkait.
 - Kelembapan jurnal adalah kategori kualitatif, bukan persen sensor; jelaskan bahwa angka sensor tidak dapat dibandingkan langsung dengan kategori itu.
 - Suhu pada sumber cabai/jagung adalah suhu rata-rata tahunan/iklim; jangan samakan dengan suhu tanah sensor. Untuk padi, tabelnya adalah hasil lokasi tertentu, bukan rentang universal.
 - Rentang tanaman di dashboard hanya untuk penyaringan awal dan tidak otomatis dibuktikan oleh kutipan.
@@ -137,6 +138,107 @@ export default {
         ? EVIDENCE[id].crops.includes(cropName) || (isCustomCrop && EVIDENCE[id].crops.length === CROPS.length)
         : EVIDENCE[id].crops.length === CROPS.length)
     );
+    const validateAnalysis = (analysis) => {
+      const validStatement = (item) =>
+        item &&
+        typeof item.statement === "string" &&
+        Boolean(item.statement.trim()) &&
+        Array.isArray(item.evidenceIds);
+      const validEvidence = (ids, allowed, required) =>
+        Array.isArray(ids) &&
+        (!required || !allowed.length || ids.length > 0) &&
+        ids.every((id) => allowed.includes(id));
+
+      if (!analysis || typeof analysis !== "object") {
+        return "Struktur analisis Gemini tidak lengkap";
+      }
+
+      if (mode === "general") {
+        const summaryParameters = new Set(KEYS);
+        if (
+          !Array.isArray(analysis.summary) ||
+          analysis.summary.length !== KEYS.length ||
+          !Array.isArray(analysis.suitableCrops) ||
+          analysis.suitableCrops.length < 1 ||
+          analysis.suitableCrops.length > CROPS.length ||
+          !Array.isArray(analysis.attention)
+        ) {
+          return "Analisis tanaman yang cocok tidak lengkap";
+        }
+        for (const statement of analysis.summary) {
+          const parameter = statement && statement.parameter;
+          const allowed = KEYS.includes(parameter) ? evidenceIdsFor(null, parameter) : [];
+          if (
+            !KEYS.includes(parameter) ||
+            !summaryParameters.delete(parameter) ||
+            !validStatement(statement) ||
+            !validEvidence(statement.evidenceIds, allowed, true)
+          ) {
+            return "Ringkasan parameter atau sitasinya tidak valid";
+          }
+        }
+        const seenCrops = new Set();
+        for (const item of analysis.suitableCrops) {
+          const cropEvidence = item && KEYS.includes(item.parameter)
+            ? evidenceIdsFor(item.crop, item.parameter)
+            : [];
+          if (
+            !item ||
+            !CROPS.includes(item.crop) ||
+            !KEYS.includes(item.parameter) ||
+            seenCrops.has(item.crop) ||
+            typeof item.reason !== "string" ||
+            !item.reason.trim() ||
+            !validEvidence(item.evidenceIds, cropEvidence, true)
+          ) {
+            return "Rekomendasi tanaman atau sitasinya tidak valid";
+          }
+          seenCrops.add(item.crop);
+        }
+        if (analysis.attention.some((item) =>
+          !item ||
+          !KEYS.includes(item.parameter) ||
+          !validStatement(item) ||
+          !validEvidence(item.evidenceIds, evidenceIdsFor(null, item.parameter), true)
+        )) {
+          return "Pernyataan perhatian atau sitasinya tidak valid";
+        }
+        if (summaryParameters.size) {
+          return "Ringkasan AI belum membahas semua parameter";
+        }
+        return null;
+      }
+
+      if (
+        !Array.isArray(analysis.statements) ||
+        analysis.statements.length !== KEYS.length ||
+        !validStatement(analysis.conclusion)
+      ) {
+        return "Analisis tanaman belum memuat semua parameter dan kesimpulan";
+      }
+      const seenParameters = new Set();
+      for (const statement of analysis.statements) {
+        const parameter = statement && statement.parameter;
+        const allowed = KEYS.includes(parameter) ? evidenceIdsFor(crop, parameter) : [];
+        if (
+          !KEYS.includes(parameter) ||
+          seenParameters.has(parameter) ||
+          !validStatement(statement) ||
+          !validEvidence(statement.evidenceIds, allowed, true)
+        ) {
+          return "Analisis parameter atau sitasinya tidak valid";
+        }
+        seenParameters.add(parameter);
+      }
+      const conclusionEvidence = Object.keys(EVIDENCE).filter((id) =>
+        EVIDENCE[id].crops.includes(crop) || (isCustomCrop && EVIDENCE[id].crops.length === CROPS.length)
+      );
+      if (seenParameters.size !== KEYS.length ||
+          !validEvidence(analysis.conclusion.evidenceIds, conclusionEvidence, true)) {
+        return "Kesimpulan analisis atau sitasinya tidak valid";
+      }
+      return null;
+    };
     const evidenceText = Object.fromEntries(Object.entries(EVIDENCE).map(([id, evidence]) => [
       id, { excerpt: evidence.excerpt, page: evidence.page, crops: evidence.crops, parameters: evidence.parameters },
     ]));
@@ -167,154 +269,65 @@ export default {
         "Berikan satu pernyataan berbasis data untuk tiap parameter dan kesimpulan untuk tanaman tersebut.";
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-    const requestBody = JSON.stringify({
-      systemInstruction: { parts: [{ text: SYSTEM }] },
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { maxOutputTokens: 1800, temperature: 0.2, responseMimeType: "application/json" },
-    });
     const retryable = new Set([429, 500, 502, 503, 504]);
-    let r;
-    for (let attempt = 0; ; attempt++) {
-      r = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": env.GEMINI_API_KEY,
-        },
-        body: requestBody,
+    let validationError = null;
+    for (let generationAttempt = 0; generationAttempt < 2; generationAttempt++) {
+      const requestPrompt = generationAttempt === 0
+        ? prompt
+        : `${prompt}\nJawaban sebelumnya tidak lolos validasi karena: ${validationError}. Buat ulang seluruh JSON dan pastikan nama parameter, tanaman, serta setiap ID sitasi persis sesuai daftar yang diizinkan.`;
+      const requestBody = JSON.stringify({
+        systemInstruction: { parts: [{ text: SYSTEM }] },
+        contents: [{ role: "user", parts: [{ text: requestPrompt }] }],
+        generationConfig: { maxOutputTokens: 1800, temperature: 0.2, responseMimeType: "application/json" },
       });
-      if (!retryable.has(r.status) || attempt >= 2) break;
+      let r;
+      for (let attempt = 0; ; attempt++) {
+        r = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": env.GEMINI_API_KEY,
+          },
+          body: requestBody,
+        });
+        if (!retryable.has(r.status) || attempt >= 2) break;
 
-      const retryAfter = Number(r.headers.get("Retry-After"));
-      const delay = Number.isFinite(retryAfter) && retryAfter > 0
-        ? Math.min(retryAfter * 1000, 5000)
-        : 1000 * (2 ** attempt);
-      await r.body?.cancel();
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-
-    let d;
-    try {
-      d = await r.json();
-    } catch {
-      return reply({ error: `Respons Gemini tidak valid (kode ${r.status})` }, 502);
-    }
-    if (!r.ok) {
-      return reply({ error: d.error?.message || `Panggilan ke Gemini gagal (kode ${r.status})` }, 502);
-    }
-    const parts = (d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts) || [];
-    const text = parts.filter((p) => typeof p.text === "string" && !p.thought).map((p) => p.text).join("\n");
-
-    if (!text) {
-      return reply({ error: "Gemini tidak mengembalikan analisis terstruktur" }, 502);
-    }
-
-    let result;
-    try {
-      result = JSON.parse(text);
-    } catch {
-      return reply({ error: "Format analisis Gemini tidak valid; silakan ulangi analisis" }, 502);
-    }
-    const analysis = result && result.analysis;
-    const validStatement = (item) =>
-      item &&
-      typeof item.statement === "string" &&
-      Boolean(item.statement.trim()) &&
-      Array.isArray(item.evidenceIds);
-    const validEvidence = (ids, allowed, required) =>
-      Array.isArray(ids) &&
-      (!required || !allowed.length || ids.length > 0) &&
-      ids.every((id) => allowed.includes(id));
-
-    if (!analysis || typeof analysis !== "object") {
-      return reply({ error: "Struktur analisis Gemini tidak lengkap" }, 502);
-    }
-
-    if (mode === "general") {
-      const summaryParameters = new Set(KEYS);
-      if (
-        !Array.isArray(analysis.summary) ||
-        analysis.summary.length !== KEYS.length ||
-        !Array.isArray(analysis.suitableCrops) ||
-        analysis.suitableCrops.length < 1 ||
-        analysis.suitableCrops.length > CROPS.length ||
-        !Array.isArray(analysis.attention)
-      ) {
-        return reply({ error: "Analisis tanaman yang cocok tidak lengkap" }, 502);
+        const retryAfter = Number(r.headers.get("Retry-After"));
+        const delay = Number.isFinite(retryAfter) && retryAfter > 0
+          ? Math.min(retryAfter * 1000, 5000)
+          : 1000 * (2 ** attempt);
+        await r.body?.cancel();
+        await new Promise((resolve) => setTimeout(resolve, delay));
       }
-      for (const statement of analysis.summary) {
-        const parameter = statement && statement.parameter;
-        const allowed = KEYS.includes(parameter) ? evidenceIdsFor(null, parameter) : [];
-        if (
-          !KEYS.includes(parameter) ||
-          !summaryParameters.delete(parameter) ||
-          !validStatement(statement) ||
-          !validEvidence(statement.evidenceIds, allowed, true)
-        ) {
-          return reply({ error: "Ringkasan parameter atau sitasinya tidak valid" }, 502);
-        }
+
+      let d;
+      try {
+        d = await r.json();
+      } catch {
+        return reply({ error: `Respons Gemini tidak valid (kode ${r.status})` }, 502);
       }
-      const seenCrops = new Set();
-      for (const item of analysis.suitableCrops) {
-        const cropEvidence = item && KEYS.includes(item.parameter)
-          ? evidenceIdsFor(item.crop, item.parameter)
-          : [];
-        if (
-          !item ||
-          !CROPS.includes(item.crop) ||
-          !KEYS.includes(item.parameter) ||
-          seenCrops.has(item.crop) ||
-          typeof item.reason !== "string" ||
-          !item.reason.trim() ||
-          !validEvidence(item.evidenceIds, cropEvidence, true)
-        ) {
-          return reply({ error: "Rekomendasi tanaman atau sitasinya tidak valid" }, 502);
-        }
-        seenCrops.add(item.crop);
+      if (!r.ok) {
+        return reply({ error: d.error?.message || `Panggilan ke Gemini gagal (kode ${r.status})` }, 502);
       }
-      if (analysis.attention.some((item) =>
-        !item ||
-        !KEYS.includes(item.parameter) ||
-        !validStatement(item) ||
-        !validEvidence(item.evidenceIds, evidenceIdsFor(null, item.parameter), true)
-      )) {
-        return reply({ error: "Pernyataan perhatian atau sitasinya tidak valid" }, 502);
+      const parts = (d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts) || [];
+      const text = parts.filter((p) => typeof p.text === "string" && !p.thought).map((p) => p.text).join("\n");
+      if (!text) {
+        validationError = "Gemini tidak mengembalikan analisis terstruktur";
+        continue;
       }
-      if (summaryParameters.size) {
-        return reply({ error: "Ringkasan AI belum membahas semua parameter" }, 502);
+
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch {
+        validationError = "Format analisis Gemini tidak valid";
+        continue;
       }
-      return reply({ analysis });
+      const analysis = result && result.analysis;
+      validationError = validateAnalysis(analysis);
+      if (!validationError) return reply({ analysis });
     }
 
-    if (
-      !Array.isArray(analysis.statements) ||
-      analysis.statements.length !== KEYS.length ||
-      !validStatement(analysis.conclusion)
-    ) {
-      return reply({ error: "Analisis tanaman belum memuat semua parameter dan kesimpulan" }, 502);
-    }
-    const seenParameters = new Set();
-    for (const statement of analysis.statements) {
-      const parameter = statement && statement.parameter;
-      const allowed = KEYS.includes(parameter) ? evidenceIdsFor(crop, parameter) : [];
-      if (
-        !KEYS.includes(parameter) ||
-        seenParameters.has(parameter) ||
-        !validStatement(statement) ||
-        !validEvidence(statement.evidenceIds, allowed, true)
-      ) {
-        return reply({ error: "Analisis parameter atau sitasinya tidak valid" }, 502);
-      }
-      seenParameters.add(parameter);
-    }
-    const conclusionEvidence = Object.keys(EVIDENCE).filter((id) =>
-      EVIDENCE[id].crops.includes(crop) || (isCustomCrop && EVIDENCE[id].crops.length === CROPS.length)
-    );
-    if (seenParameters.size !== KEYS.length ||
-        !validEvidence(analysis.conclusion.evidenceIds, conclusionEvidence, true)) {
-      return reply({ error: "Kesimpulan analisis atau sitasinya tidak valid" }, 502);
-    }
-
-    return reply({ analysis });
+    return reply({ error: `${validationError || "Analisis Gemini tidak valid"}; silakan ulangi analisis` }, 502);
   },
 };

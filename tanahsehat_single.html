@@ -365,7 +365,7 @@
     let latest = null, hist = [];
     const aiBusy = { general: false, crop: false };
     const aiControllers = { general: null, crop: null };
-    let aiTimer = null, selectedJournal = "soil";
+    let aiTimer = null, selectedJournal = "soil", journalLoadId = 0;
     let simMode = false, simTimer = null, lastSimHistory = 0;
 
     function dev(v, r) {
@@ -535,27 +535,61 @@
       };
     }
 
-    function openEvidence(id, statement) {
+    async function openEvidence(id, statement) {
       const evidence = JOURNAL_EVIDENCE[id];
       if (!evidence) return;
       const journal = JOURNAL_DOCS[evidence.journal];
+      const loadId = ++journalLoadId;
       selectedJournal = evidence.journal;
       $("journalTabs").querySelectorAll("button[data-journal]").forEach((item) =>
         item.setAttribute("aria-pressed", String(item.dataset.journal === selectedJournal))
       );
-      const pdfUrl = "./journals/" + encodeURIComponent(journal.file) + "#page=" + evidence.page + "&toolbar=1&navpanes=0";
       $("journalFileName").textContent = journal.file;
       $("journalPage").textContent = "Halaman " + evidence.page;
-      $("pdfEmpty").hidden = true;
-      $("pdfFrame").hidden = false;
-      $("pdfFrame").src = pdfUrl;
-      $("journalFull").href = pdfUrl;
-      $("journalFull").tabIndex = 0;
-      $("journalFullBtn").disabled = false;
+      $("pdfEmpty").hidden = false;
+      $("pdfEmpty").querySelector("strong").textContent = "Membuka jurnal...";
+      $("pdfEmpty").querySelector("p").textContent = "Memeriksa berkas PDF dan halaman sumber.";
+      $("pdfFrame").hidden = true;
+      $("journalFull").href = "#";
+      $("journalFull").tabIndex = -1;
+      $("journalFullBtn").disabled = true;
       $("journalStatement").textContent = statement || "Kutipan sumber untuk halaman ini.";
       $("journalExcerpt").textContent = evidence.excerpt;
       $("journalDescription").textContent = journal.title + " · PDF hlm. " + evidence.page + ".";
       $("journalReader").scrollIntoView({ behavior: "smooth", block: "start" });
+
+      const encodedFile = encodeURIComponent(journal.file);
+      const candidates = location.protocol === "file:"
+        ? ["./journals/" + encodedFile]
+        : ["./" + encodedFile, "./journals/" + encodedFile];
+      try {
+        let pdfPath = null;
+        for (const candidate of candidates) {
+          if (location.protocol === "file:") {
+            pdfPath = candidate;
+            break;
+          }
+          const response = await fetch(candidate, { method: "HEAD", cache: "no-store" });
+          if (response.ok) {
+            pdfPath = candidate;
+            break;
+          }
+        }
+        if (loadId !== journalLoadId) return;
+        if (!pdfPath) throw new Error("Berkas jurnal tidak ditemukan di situs.");
+        const pdfUrl = pdfPath + "#page=" + evidence.page + "&toolbar=1&navpanes=0";
+        $("pdfEmpty").hidden = true;
+        $("pdfFrame").hidden = false;
+        $("pdfFrame").src = pdfUrl;
+        $("journalFull").href = pdfUrl;
+        $("journalFull").tabIndex = 0;
+        $("journalFullBtn").disabled = false;
+      } catch (error) {
+        if (loadId !== journalLoadId) return;
+        $("pdfEmpty").querySelector("strong").textContent = "PDF jurnal tidak tersedia.";
+        $("pdfEmpty").querySelector("p").textContent =
+          error.message || "Pastikan folder jurnal sudah ikut diunggah bersama dashboard.";
+      }
     }
 
     function applyScenario(s, phase, wave) {
