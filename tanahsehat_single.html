@@ -1,14 +1,12 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html lang="id"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TanahKu Monitor</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#167443" />
-  <link rel="apple-touch-icon" href="icon-192.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#167443">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <style>
     :root { --bg:#f1f8f2; --card:#fff; --line:#dfebe1; --text:#183527; --muted:#6b7b71; --accent:#167443; --accent-dark:#105b35; --ok:#16834a; --warn:#bd790b; --bad:#bf4a38; --off:#9aa39d; --shadow:0 12px 30px rgba(26,66,42,.08); }
     * { box-sizing:border-box; }
@@ -74,12 +72,11 @@
     .auto-label input { min-height:auto; accent-color:var(--accent); }
     .ai-output,.crop-summary { min-height:115px; padding:13px 14px; border:1px solid #e5f1e7; border-radius:13px; background:#f0faf2; font-size:.82rem; line-height:1.6; white-space:pre-wrap; }
     .ai-output.err { border-color:#f3c4c4; color:var(--bad); background:#fff2f2; }
-    .ai-output .output-label { white-space:normal; }
-    .ai-recommendation { margin:0 0 8px; color:#24583a; font-weight:800; white-space:normal; }
-    .ai-citations { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:10px; padding-top:9px; border-top:1px solid #dcebdd; white-space:normal; }
-    .ai-citations-label { color:var(--muted); font-size:.74rem; }
-    .citation-link { padding:4px 8px; border:1px solid #b9d8c0; border-radius:999px; color:#24583a; background:#fff; font-size:.72rem; font-weight:800; }
     .output-label { margin:0 0 8px; color:var(--muted); font-size:.66rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
+    .ai-statement { margin:7px 0; }
+    .ai-citation { display:inline; min-height:0; margin:0 0 0 3px; padding:0 3px; border:1px solid #96b4a1; border-radius:4px; color:#145c85; background:#fff; font-size:.68rem; font-weight:800; line-height:1.35; vertical-align:baseline; }
+    .ai-citation:hover { background:#e9f4ed; }
+    .citation-unavailable { color:var(--muted); font-size:.72rem; }
     .crop-switch { display:flex; flex-wrap:wrap; gap:7px; }
     .crop-switch button { min-height:34px; padding:7px 12px; border:1px solid var(--line); border-radius:999px; color:var(--text); background:#fff; font-size:.78rem; font-weight:700; }
     .crop-switch button[aria-pressed="true"] { border-color:var(--accent); color:#fff; background:var(--accent); }
@@ -116,6 +113,7 @@
     .reader-note h3 { margin:0 0 7px; color:#b7d2c0; font-size:.64rem; letter-spacing:.05em; }
     .reader-note p { margin:0; font-size:.78rem; line-height:1.55; }
     .highlight-key { display:inline-block; width:9px; height:9px; margin-right:5px; border-radius:2px; background:#f8d85c; }
+    .journal-excerpt { padding:2px 4px; border-radius:3px; color:#302700; background:#f8d85c; }
     .history-card { margin-top:15px; padding:16px 18px; }
     .history-card summary { cursor:pointer; font-weight:800; }
     .history-card .bar { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0; }
@@ -130,17 +128,17 @@
   <main>
     <header class="topbar">
       <div class="brand">
-        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-14 3-14 10a6 6 0 0 0 6 6c7 0 10-6 8-16Z"/><path d="M4 21c3-5 7-8 12-11"/></svg></span>
+        <span class="brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-14 3-14 10a6 6 0 0 0 6 6c7 0 10-6 8-16Z"></path><path d="M4 21c3-5 7-8 12-11"></path></svg></span>
         <div><h1>TanahKu Monitor</h1><p class="sub">Lahan A · Sensor tanah real-time</p></div>
       </div>
       <div class="top-status">
-        <span class="status"><i id="dot" class="dot"></i><span id="stat">Menyiapkan sensor...</span></span>
-        <span id="updated" class="updated">Belum ada data</span>
+        <span class="status"><i id="dot" class="dot on"></i><span id="stat">Simulasi aktif — data contoh</span></span>
+        <span id="updated" class="updated">Diperbarui 10.46.50</span>
       </div>
     </header>
 
     <div class="toolbar" aria-label="Kontrol data sensor">
-      <button id="simBtn" class="btn" type="button">Mulai simulasi</button>
+      <button id="simBtn" class="btn" type="button">Hentikan simulasi</button>
       <select id="scenario" title="Pilih variasi data simulasi">
         <option value="normal">Skenario: Normal</option>
         <option value="kering">Skenario: Tanah kering</option>
@@ -149,17 +147,47 @@
       </select>
     </div>
 
-    <section class="sensor-grid" id="grid" aria-label="Pembacaan sensor"></section>
+    <section class="sensor-grid" id="grid" aria-label="Pembacaan sensor">
+          <article class="sensor-card">
+            <div class="sensor-top"><h2>Kelembapan tanah</h2><span class="sensor-state bad" id="c_moist">Agak kering</span></div>
+            <div class="sensor-value"><b id="v_moist">29</b><span>%</span></div>
+            <div class="sensor-track" role="img" aria-label="Ideal umum 60–80%">
+              <i class="ideal-band" style="left:60%;width:20%"></i>
+              <i class="sensor-fill" id="fill_moist" style="left: 29%;"></i>
+            </div>
+            <div class="range-row"><span>0%</span><span class="ideal-label">Ideal umum 60–80%</span><span>100%</span></div>
+          </article>
+        
+          <article class="sensor-card">
+            <div class="sensor-top"><h2>pH tanah</h2><span class="sensor-state " id="c_ph">Mendekati netral</span></div>
+            <div class="sensor-value"><b id="v_ph">6.4</b><span></span></div>
+            <div class="sensor-track" role="img" aria-label="Mendekati netral">
+              <i class="ideal-band" style="left:42.857142857142854%;width:7.142857142857142%"></i>
+              <i class="sensor-fill" id="fill_ph" style="left: 45.7143%;"></i>
+            </div>
+            <div class="range-row"><span>0</span><span class="ideal-label">Mendekati netral</span><span>14</span></div>
+          </article>
+        
+          <article class="sensor-card">
+            <div class="sensor-top"><h2>Suhu tanah</h2><span class="sensor-state " id="c_temp">Normal</span></div>
+            <div class="sensor-value"><b id="v_temp">30.2</b><span>°C</span></div>
+            <div class="sensor-track" role="img" aria-label="Ideal umum 25–37°C">
+              <i class="ideal-band" style="left:50%;width:24%"></i>
+              <i class="sensor-fill" id="fill_temp" style="left: 60.4%;"></i>
+            </div>
+            <div class="range-row"><span>0°C</span><span class="ideal-label">Ideal umum 25–37°C</span><span>50°C</span></div>
+          </article>
+        </section>
     <section class="stress-inline" aria-live="polite">
-      <strong>Indeks stres <span id="sv">--</span>/100</strong>
-      <span id="sl">Menunggu data sensor</span>
-      <div class="meter"><i id="meter"></i></div>
+      <strong>Indeks stres <span id="sv" style="color: var(--warn);">34</span>/100</strong>
+      <span id="sl">Stres sedang untuk Cabai</span>
+      <div class="meter"><i id="meter" style="width: 33.8889%; background: var(--warn);"></i></div>
     </section>
 
     <section class="analysis-grid">
       <article class="panel">
         <div class="panel-heading">
-          <span class="heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-8"/><path d="M7 12a5 5 0 0 1 10 0"/><path d="M5 8a7 7 0 0 1 14 0"/><path d="M9 20h6"/></svg></span>
+          <span class="heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-8"></path><path d="M7 12a5 5 0 0 1 10 0"></path><path d="M5 8a7 7 0 0 1 14 0"></path><path d="M9 20h6"></path></svg></span>
           <div><h2>Analisis AI Kondisi Tanah</h2><p>Jabarkan data sensor dan cari tanaman yang cocok.</p></div>
         </div>
         <div class="panel-action">
@@ -172,7 +200,7 @@
 
       <article class="panel">
         <div class="panel-heading">
-          <span class="heading-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M8 13c-3-1-4-4-3-7 4 0 7 2 7 6"/><path d="M13 11c0-4 3-7 7-7 1 4-1 8-6 9"/></svg></span>
+          <span class="heading-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"></path><path d="M8 13c-3-1-4-4-3-7 4 0 7 2 7 6"></path><path d="M13 11c0-4 3-7 7-7 1 4-1 8-6 9"></path></svg></span>
           <div><h2>Saran untuk Tanaman Pilihan</h2><p>Pilih tanaman yang ingin ditanam, AI menilai kecocokannya.</p></div>
         </div>
         <div id="cropSwitch" class="crop-switch" role="group" aria-label="Pilih tanaman">
@@ -181,7 +209,7 @@
           <button type="button" data-crop="Cabai" aria-pressed="false">Cabai</button>
           <button id="addCropBtn" class="add-crop" type="button" aria-expanded="false">+ Tanaman lain</button>
         </div>
-        <form id="customCropForm" class="custom-crop-form" hidden>
+        <form id="customCropForm" class="custom-crop-form" hidden="">
           <label class="crop-name">Nama tanaman
             <input id="customCropName" maxlength="30" placeholder="Contoh: Kedelai" autocomplete="off">
           </label>
@@ -195,37 +223,42 @@
           <button id="cropAiBtn" class="btn small" type="button">Minta saran untuk Padi</button>
           <span id="cropAiMeta" class="muted" style="font-size:.72rem"></span>
         </div>
-        <div id="diag" class="crop-summary" aria-live="polite"><p class="output-label">Contoh saran tanaman</p>Menunggu data sensor untuk dibandingkan dengan kebutuhan tanaman.</div>
-        <div id="cropAiOut" class="ai-output" aria-live="polite" style="margin-top:9px"><p class="output-label">Saran AI</p>Tekan tombol untuk meminta analisis khusus tanaman.</div>
+        <div id="diag" class="crop-summary" aria-live="polite"><div class="crop-result-head"><p class="output-label">Contoh saran untuk Cabai</p><span class="fit-badge warn">Cocok dengan perbaikan</span></div><div class="recommendation-row"><strong>Kelembapan tanah<br>29% · Kurang</strong><span>Kurang untuk Cabai. Tambah pengairan bertahap hingga rentang 50–70%.</span></div><div class="recommendation-row"><strong>pH tanah<br>6.4 · Sesuai</strong><span>Sudah sesuai, tidak perlu dikoreksi.</span></div><div class="recommendation-row"><strong>Suhu tanah<br>30.2°C · Berlebih</strong><span>Di luar rentang 18–30°C. Periksa kondisi lingkungan dan pembacaan sensor.</span></div></div>
+        <div id="cropAiOut" class="ai-output" aria-live="polite" style="margin-top:9px">Tekan tombol untuk meminta analisis khusus tanaman.</div>
       </article>
     </section>
 
-    <section class="journal-card" aria-labelledby="journalTitle">
+    <section id="journalReader" class="journal-card" aria-labelledby="journalTitle">
       <div class="journal-heading">
-        <span class="heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 13h8M8 17h8"/></svg></span>
-        <div><h2 id="journalTitle">Pembaca Jurnal</h2><p>Klik sitasi pada analisis AI untuk membuka PDF jurnal langsung di panel ini.</p></div>
+        <span class="heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"></path><path d="M14 3v5h5M8 13h8M8 17h8"></path></svg></span>
+        <div><h2 id="journalTitle">Pembaca Jurnal</h2><p>Klik sitasi pada jawaban AI untuk membuka jurnal dan halaman yang mendukungnya.</p></div>
       </div>
       <div id="journalTabs" class="journal-tabs" role="tablist" aria-label="Jurnal referensi">
-        <button type="button" role="tab" data-journal="rice-acid-soil" aria-pressed="true">[1] Padi &amp; tanah sulfat masam</button>
-        <button type="button" role="tab" data-journal="maize-water-deficit" aria-pressed="false">[2] Jagung &amp; defisit air</button>
-        <button type="button" role="tab" data-journal="chili-water-stress" aria-pressed="false">[3] Cabai &amp; defisit irigasi</button>
+        <button type="button" role="tab" data-journal="soil" aria-pressed="true">[1] Kondisi tanah</button>
+        <button type="button" role="tab" data-journal="rice" aria-pressed="false">[2] Padi</button>
+        <button type="button" role="tab" data-journal="chili" aria-pressed="false">[3] Cabai</button>
+        <button type="button" role="tab" data-journal="maize" aria-pressed="false">[4] Jagung</button>
       </div>
       <div class="reader">
         <div class="pdf-panel">
           <div class="reader-header">
-            <span id="journalFileName">Memuat PDF jurnal...</span>
+            <span id="journalFileName">PDF jurnal belum dipilih</span>
             <span class="reader-tools">
-              <span id="journalPage">PDF</span>
-              <a id="journalFull" href="#" target="_blank" rel="noopener noreferrer" aria-label="Buka PDF di tab baru">↗</a>
+              <span id="journalPage">Halaman --</span>
+              <a id="journalFull" href="#" target="_blank" rel="noopener" aria-label="Buka PDF di tab baru" tabindex="-1">↗</a>
             </span>
           </div>
-          <iframe id="pdfFrame" class="pdf-frame" title="Pratinjau jurnal PDF"></iframe>
+          <div id="pdfEmpty" class="pdf-empty">
+            <strong>Pilih sitasi pada analisis AI.</strong>
+            <p>PDF jurnal dan halaman sumber akan terbuka di sini, tanpa perlu mengunggah dokumen.</p>
+          </div>
+          <iframe id="pdfFrame" class="pdf-frame" title="Pratinjau jurnal PDF" hidden="" src="about:blank"></iframe>
         </div>
         <div class="reader-notes">
-          <div class="reader-note"><h3>SITASI TERPILIH</h3><p id="journalDescription"></p></div>
-          <div class="reader-note"><h3>RELEVANSI</h3><p id="journalRelevance"></p></div>
-          <div class="reader-note"><h3>BATASAN</h3><p id="journalLimit"></p></div>
-          <div><a id="journalFullBtn" class="btn secondary small" href="#" target="_blank" rel="noopener noreferrer">Buka PDF di tab baru</a></div>
+          <div class="reader-note"><h3>PERNYATAAN AI YANG DIKUTIP</h3><p id="journalStatement">Klik nomor sitasi untuk melihat pernyataan yang didukung oleh sumber ini.</p></div>
+          <div class="reader-note"><h3>BAGIAN DI JURNAL</h3><p><span class="highlight-key" aria-hidden="true"></span><mark id="journalExcerpt" class="journal-excerpt">Kutipan jurnal yang mendukung pernyataan AI akan ditampilkan di sini.</mark></p></div>
+          <div class="reader-note"><h3>SUMBER DAN HALAMAN</h3><p id="journalDescription">Penulis, tahun, dan halaman PDF ditampilkan setelah sitasi dipilih.</p></div>
+          <div><button id="journalFullBtn" class="btn secondary small" type="button" disabled="">Buka jurnal layar penuh</button></div>
         </div>
       </div>
     </section>
@@ -233,10 +266,10 @@
     <details class="history-card" id="history">
       <summary>Riwayat pembacaan sensor</summary>
       <div class="bar">
-        <label>Parameter <select id="param"></select></label>
+        <label>Parameter <select id="param"><option value="stress">Indeks stres tanah</option><option value="moist">Kelembapan tanah</option><option value="ph">pH tanah</option><option value="temp">Suhu tanah</option></select></label>
         <button id="csv" class="btn secondary" type="button">Unduh riwayat (CSV)</button>
       </div>
-      <canvas id="chart" aria-label="Grafik riwayat sensor"></canvas>
+      <canvas id="chart" aria-label="Grafik riwayat sensor" width="312" height="240"></canvas>
     </details>
     <p class="disclaimer">Tampilan contoh menggunakan data simulasi sensor selama hardware belum tersedia. Saran AI bersifat rekomendasi awal, bukan pengganti uji laboratorium atau pendampingan ahli pertanian. Rentang tanaman dapat disesuaikan dengan referensi lahan Anda.</p>
   </main>
@@ -270,6 +303,59 @@
       { k: "temp",  n: "Suhu tanah",       u: "°C", d: 1 },
     ];
 
+    const JOURNAL_DOCS = {
+      soil: {
+        number: 1,
+        title: "Karamina, Fikrinda, & Murti (2017). Jurnal Kultivasi, 16(3).",
+        file: "Kompleksitas pengaruh temperatur dan kelembaban tanah terhadap.pdf",
+        defaultEvidence: "soil-ph-general",
+      },
+      rice: {
+        number: 2,
+        title: "Robbo & Galib (2023). Jurnal Tanah dan Sumberdaya Lahan, 10(2).",
+        file: "15.+319-325,+909,+ROBBO+&+GALIB-N1.pdf",
+        defaultEvidence: "rice-site-table",
+      },
+      chili: {
+        number: 3,
+        title: "Syam et al. (2025). Jurnal AGrotekMAS, 6(1).",
+        file: "727-1465-1-SM.pdf",
+        defaultEvidence: "chili-suitability",
+      },
+      maize: {
+        number: 4,
+        title: "Wirosoedarmo et al. (2011). AGRITECH, 31(1).",
+        file: "Evaluasi_Kesesuaian_Lahan_untuk_Tanaman.pdf",
+        defaultEvidence: "maize-suitability",
+      },
+    };
+    const JOURNAL_EVIDENCE = {
+      "soil-ph-general": {
+        journal: "soil", page: 2, parameters: ["ph"], crops: ["Padi", "Cabai", "Jagung"],
+        excerpt: "In general, nutrients will be easily absorbed by plants at pH 6-7, because most of nutrients will easily dissolve in water in that pH.",
+      },
+      "soil-moisture-categories": {
+        journal: "soil", page: 5, parameters: ["moist"], crops: ["Padi", "Cabai", "Jagung"],
+        excerpt: "Wet + = Kelembaban tinggi; Wet = Lembab; Nor = Normal.",
+      },
+      "rice-site-table": {
+        journal: "rice", page: 4, parameters: ["ph", "temp"], crops: ["Padi"],
+        excerpt: "Tabel 1 (lokasi penelitian): temperatur tanah 25°C; nilai pH pada unit lahan yang diteliti berkisar sekitar 5,79-7,00. Ini hasil lokasi penelitian, bukan ambang ideal universal.",
+      },
+      "chili-suitability": {
+        journal: "chili", page: 3, parameters: ["ph", "temp"], crops: ["Cabai"],
+        excerpt: "Tabel 3, kelas S1 cabai rawit: temperatur rata-rata tahunan 24-28°C; pH H2O 6,0-7,5.",
+      },
+      "chili-lab-methods": {
+        journal: "chili", page: 3, parameters: ["ph"], crops: ["Cabai"],
+        excerpt: "Tabel 1: pH tanah diukur dengan pH meter.",
+      },
+      "maize-suitability": {
+        journal: "maize", page: 3, parameters: ["ph", "temp"], crops: ["Jagung"],
+        excerpt: "Tabel 1, kelas S1: temperatur rerata 20-26°C; pH H2O 5,8-7,8.",
+      },
+    };
+
     const WEIGHTS = { moist: 1 / 3, ph: 1 / 3, temp: 1 / 3 };
     const $ = (id) => document.getElementById(id);
     let selectedCrop = "Padi";
@@ -279,50 +365,7 @@
     let latest = null, hist = [];
     const aiBusy = { general: false, crop: false };
     const aiControllers = { general: null, crop: null };
-    let aiTimer = null, selectedJournal = "rice-acid-soil";
-    const JOURNALS = {
-      "rice-acid-soil": {
-        label: "[1]",
-        short: "Padi & tanah sulfat masam",
-        title: "Improving Soil Properties and Rice Yield on Saline-affected Acid Sulfate Soil by Controlled-release Fertilizer",
-        authors: "Tất Anh Thư & Võ Quang Minh (2022)",
-        publication: "Indian Journal of Agricultural Research",
-        doi: "10.18805/ijare.af-753",
-        pdf: "https://arccarticles.s3.amazonaws.com/PublishedArticle/Final-attachment-published-AF-753-6089603e9087340b9bdcbbb1.pdf",
-        license: "",
-        relevance: "Studi padi pada tanah sulfat masam terdampak salinitas di Vietnam; konteksnya spesifik dan bukan uji rentang pH sensor ini.",
-        limit: "Penelitian menguji pupuk lepas terkendali. Sitasi ini tidak membenarkan saran pupuk dari sensor kelembapan, pH, dan suhu saja."
-      },
-      "maize-water-deficit": {
-        label: "[2]",
-        short: "Jagung & defisit air",
-        title: "Yield Response of Spring Maize to Inter-Row Subsoiling and Soil Water Deficit in Northern China",
-        authors: "Zhandong Liu et al. (2016)",
-        publication: "PLOS ONE, 11(4), e0153809",
-        doi: "10.1371/journal.pone.0153809",
-        pdf: "./journals/maize-water-deficit.pdf",
-        license: "Salinan PDF lokal berlisensi Creative Commons Attribution 4.0 (CC BY 4.0); atribusi lengkap dicantumkan di atas.",
-        relevance: "Penelitian lapangan tentang respons hasil jagung terhadap defisit air dan pengolahan tanah pada lokasi penelitian di Tiongkok utara.",
-        limit: "Kondisi lokasi dan perlakuan penelitian tertentu; kelembapan sensor saja tidak cukup untuk menyimpulkan hasil panen atau menentukan irigasi."
-      },
-      "chili-water-stress": {
-        label: "[3]",
-        short: "Cabai & defisit irigasi",
-        title: "Influence of deficit irrigation levels on agronomic performance of pepper (Capsicum annuum L.) under drip at Alage, Central Rift Valley of Ethiopia",
-        authors: "Seid Mohammed & Arebu Hussen (2023)",
-        publication: "PLOS ONE, 18(11), e0280639",
-        doi: "10.1371/journal.pone.0280639",
-        pdf: "./journals/pepper-deficit-irrigation.pdf",
-        license: "Salinan PDF lokal berlisensi Creative Commons Attribution 4.0 (CC BY 4.0); atribusi lengkap dicantumkan di atas.",
-        relevance: "Eksperimen lapangan cabai di Ethiopia membandingkan tingkat defisit air pada irigasi tetes dan mengukur respons agronomis serta hasil.",
-        limit: "Hasil bergantung pada lokasi dan perlakuan penelitian; angka kelembapan sensor ini bukan pengganti jadwal irigasi dalam studi."
-      }
-    };
-    const CROP_CITATIONS = {
-      Padi: ["rice-acid-soil"],
-      Jagung: ["maize-water-deficit"],
-      Cabai: ["chili-water-stress"]
-    };
+    let aiTimer = null, selectedJournal = "soil";
     let simMode = false, simTimer = null, lastSimHistory = 0;
 
     function dev(v, r) {
@@ -331,16 +374,6 @@
     }
 
     const stressOf = (o, r) => Object.entries(WEIGHTS).reduce((s, [k, w]) => s + dev(o[k], r[k]) * w * 100, 0);
-    const closestCrops = (sample) => {
-      const distances = Object.keys(CROP_CITATIONS).map((name) => ({
-        name,
-        distance: stressOf(sample, CROPS[name])
-      }));
-      const bestDistance = Math.min(...distances.map((item) => item.distance));
-      return distances
-        .filter((item) => Math.abs(item.distance - bestDistance) < 1e-9)
-        .map((item) => item.name);
-    };
     const lvlClass = (d) => (d === 0 ? "ok" : d > 0.5 ? "bad" : "warn");
 
     function setStatus(on, text) {
@@ -396,13 +429,6 @@
       };
       $("param").onchange = drawChart;
       $("csv").onclick = downloadCsv;
-      document.addEventListener("click", (event) => {
-        const citation = event.target.closest("button[data-open-citation]");
-        if (citation && JOURNALS[citation.dataset.openCitation]) {
-          selectJournal(citation.dataset.openCitation);
-          $("journalTitle").scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      });
       $("simBtn").onclick = toggleSimulation;
       $("scenario").onchange = () => {
         if (!simMode) return;
@@ -412,6 +438,12 @@
       };
       $("history").addEventListener("toggle", () => {
         if ($("history").open) drawChart();
+      });
+      ["aiOut", "cropAiOut"].forEach((id) => {
+        $(id).addEventListener("click", (event) => {
+          const button = event.target.closest("button[data-evidence-id]");
+          if (button) openEvidence(button.dataset.evidenceId, button.dataset.statement);
+        });
       });
       buildJournalUI();
       window.addEventListener("resize", drawChart);
@@ -487,31 +519,43 @@
     function buildJournalUI() {
       $("journalTabs").addEventListener("click", (event) => {
         const tab = event.target.closest("button[data-journal]");
-        if (tab && JOURNALS[tab.dataset.journal]) selectJournal(tab.dataset.journal);
+        if (!tab) return;
+        selectedJournal = tab.dataset.journal;
+        $("journalTabs").querySelectorAll("button[data-journal]").forEach((item) =>
+          item.setAttribute("aria-pressed", String(item === tab))
+        );
+        openEvidence(JOURNAL_DOCS[selectedJournal].defaultEvidence, "");
       });
-      renderJournal();
+      $("journalFullBtn").onclick = () => {
+        const url = $("journalFull").href;
+        if (url && url !== "#") window.open(url, "_blank", "noopener");
+      };
+      $("journalFull").onclick = (event) => {
+        if (!$("pdfFrame").src || $("pdfFrame").src.endsWith("about:blank")) event.preventDefault();
+      };
     }
 
-    function selectJournal(id) {
-      if (!JOURNALS[id]) return;
-      selectedJournal = id;
+    function openEvidence(id, statement) {
+      const evidence = JOURNAL_EVIDENCE[id];
+      if (!evidence) return;
+      const journal = JOURNAL_DOCS[evidence.journal];
+      selectedJournal = evidence.journal;
       $("journalTabs").querySelectorAll("button[data-journal]").forEach((item) =>
-        item.setAttribute("aria-pressed", String(item.dataset.journal === id))
+        item.setAttribute("aria-pressed", String(item.dataset.journal === selectedJournal))
       );
-      renderJournal();
-    }
-
-    function renderJournal() {
-      const journal = JOURNALS[selectedJournal];
-      if (!journal) return;
-      $("pdfFrame").src = journal.pdf + "#toolbar=1&navpanes=0";
-      $("pdfFrame").title = "PDF: " + journal.title;
-      $("journalFileName").textContent = journal.title;
-      $("journalDescription").textContent = `${journal.authors}. ${journal.title}. ${journal.publication}. DOI: ${journal.doi}.`;
-      $("journalRelevance").textContent = journal.relevance;
-      $("journalLimit").textContent = journal.limit + (journal.license ? " " + journal.license : " PDF dimuat dari situs penerbit dan memerlukan koneksi internet.");
-      $("journalFull").href = journal.pdf;
-      $("journalFullBtn").href = journal.pdf;
+      const pdfUrl = "./journals/" + encodeURIComponent(journal.file) + "#page=" + evidence.page + "&toolbar=1&navpanes=0";
+      $("journalFileName").textContent = journal.file;
+      $("journalPage").textContent = "Halaman " + evidence.page;
+      $("pdfEmpty").hidden = true;
+      $("pdfFrame").hidden = false;
+      $("pdfFrame").src = pdfUrl;
+      $("journalFull").href = pdfUrl;
+      $("journalFull").tabIndex = 0;
+      $("journalFullBtn").disabled = false;
+      $("journalStatement").textContent = statement || "Kutipan sumber untuk halaman ini.";
+      $("journalExcerpt").textContent = evidence.excerpt;
+      $("journalDescription").textContent = journal.title + " · PDF hlm. " + evidence.page + ".";
+      $("journalReader").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function applyScenario(s, phase, wave) {
@@ -785,6 +829,132 @@
       URL.revokeObjectURL(a.href);
     }
 
+    function appendCitations(paragraph, evidenceIds, statement, crop, parameter) {
+      if (!Array.isArray(evidenceIds)) throw new Error("Respons AI tidak memuat daftar sitasi yang valid.");
+      const uniqueIds = [...new Set(evidenceIds)];
+      uniqueIds.forEach((id) => {
+        const evidence = JOURNAL_EVIDENCE[id];
+        if (!evidence ||
+            (crop && BUILTIN_CROPS.has(crop) && !evidence.crops.includes(crop)) ||
+            (crop && !BUILTIN_CROPS.has(crop) && evidence.crops.length !== BUILTIN_CROPS.size) ||
+            (!crop && evidence.crops.length !== BUILTIN_CROPS.size) ||
+            (parameter && !evidence.parameters.includes(parameter))) {
+          throw new Error("Sitasi AI tidak sesuai dengan pernyataan, tanaman, atau parameter.");
+        }
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "ai-citation";
+        button.dataset.evidenceId = id;
+        button.dataset.statement = statement;
+        button.textContent = "[" + JOURNAL_DOCS[evidence.journal].number + "]";
+        button.title = JOURNAL_DOCS[evidence.journal].title + " · PDF hlm. " + evidence.page;
+        paragraph.append(button);
+      });
+      if (!uniqueIds.length) {
+        const note = document.createElement("span");
+        note.className = "citation-unavailable";
+        note.textContent = " (Belum ada jurnal dengan acuan parameter yang sebanding.)";
+        paragraph.append(note);
+      }
+    }
+
+    function appendAIStatement(container, label, item, crop, parameter) {
+      if (!item || typeof item.statement !== "string" || !item.statement.trim()) {
+        throw new Error("AI mengembalikan pernyataan kosong atau tidak valid.");
+      }
+      const paragraph = document.createElement("p");
+      paragraph.className = "ai-statement";
+      if (label) {
+        const strong = document.createElement("strong");
+        strong.textContent = label + ": ";
+        paragraph.append(strong);
+      }
+      paragraph.append(document.createTextNode(item.statement));
+      appendCitations(paragraph, item.evidenceIds, item.statement, crop, parameter);
+      container.append(paragraph);
+    }
+
+    function renderAIResponse(data, type, requestedCrop) {
+      if (!data || !data.analysis || typeof data.analysis !== "object") {
+        throw new Error("Respons AI tidak memuat analisis dan sitasi terstruktur.");
+      }
+      const out = $(type === "general" ? "aiOut" : "cropAiOut");
+      out.replaceChildren();
+      const label = document.createElement("p");
+      label.className = "output-label";
+      label.textContent = type === "general" ? "Contoh hasil analisis" : "Saran AI untuk " + requestedCrop;
+      out.append(label);
+
+      if (type === "general") {
+        const analysis = data.analysis;
+        const summaryParameters = new Set(SENS.map((sensor) => sensor.k));
+        if (!Array.isArray(analysis.summary) ||
+            analysis.summary.length !== summaryParameters.size ||
+            analysis.summary.some((item) => !item || !summaryParameters.delete(item.parameter)) ||
+            summaryParameters.size) {
+          throw new Error("Ringkasan AI belum membahas kelembapan, pH, dan suhu.");
+        }
+        analysis.summary.forEach((item) => {
+          const sensor = SENS.find((entry) => entry.k === item.parameter);
+          appendAIStatement(out, "Ringkasan · " + sensor.n, item, null, item.parameter);
+        });
+        if (!Array.isArray(analysis.suitableCrops) || !analysis.suitableCrops.length) {
+          throw new Error("AI belum menyertakan tanaman yang direkomendasikan.");
+        }
+        const crops = document.createElement("p");
+        crops.className = "ai-statement";
+        const cropsLabel = document.createElement("strong");
+        cropsLabel.textContent = "Cocok untuk: ";
+        crops.append(cropsLabel);
+        analysis.suitableCrops.forEach((item) => {
+          if (!item ||
+              typeof item.crop !== "string" ||
+              !BUILTIN_CROPS.has(item.crop) ||
+              !SENS.some((sensor) => sensor.k === item.parameter) ||
+              typeof item.reason !== "string" ||
+              !item.reason.trim()) {
+            throw new Error("AI merekomendasikan tanaman yang tidak dikenal.");
+          }
+          const cropText = item.crop + " — " + item.reason;
+          const claim = document.createElement("span");
+          claim.className = "ai-crop-claim";
+          claim.textContent = cropText;
+          appendCitations(claim, item.evidenceIds, cropText, item.crop, item.parameter);
+          crops.append(claim, document.createTextNode("; "));
+        });
+        if (crops.lastChild && crops.lastChild.nodeType === Node.TEXT_NODE) {
+          crops.removeChild(crops.lastChild);
+        }
+        out.append(crops);
+
+        if (!Array.isArray(analysis.attention)) {
+          throw new Error("AI tidak memuat bagian yang perlu diperhatikan.");
+        }
+        analysis.attention.forEach((item) => {
+          if (!item || !SENS.some((sensor) => sensor.k === item.parameter)) {
+            throw new Error("Pernyataan perhatian tidak memiliki parameter yang jelas.");
+          }
+          appendAIStatement(out, "Perlu perhatian · " + SENS.find((sensor) => sensor.k === item.parameter).n, item, null, item.parameter);
+        });
+        return;
+      }
+
+      const analysis = data.analysis;
+      const expected = new Set(SENS.map((sensor) => sensor.k));
+      if (!Array.isArray(analysis.statements) ||
+          analysis.statements.length !== expected.size ||
+          analysis.statements.some((item) => !item || !expected.delete(item.parameter)) ||
+          expected.size ||
+          !analysis.conclusion) {
+        throw new Error("Analisis AI belum mencakup kelembapan, pH, suhu, dan kesimpulan.");
+      }
+      analysis.statements.forEach((item) => {
+        const sensor = SENS.find((entry) => entry.k === item.parameter);
+        appendAIStatement(out, sensor.n, item, requestedCrop, item.parameter);
+      });
+      appendAIStatement(out, "Kesimpulan", analysis.conclusion, requestedCrop, null);
+    }
+
     async function analyzeAI(type) {
       const isGeneral = type === "general";
       const out = $(isGeneral ? "aiOut" : "cropAiOut");
@@ -810,7 +980,6 @@
       out.textContent = "AI sedang menganalisis...";
 
       const requestedCrop = selectedCrop;
-      const requestedData = pickData(latest);
       const ranges = cropR();
       const controller = new AbortController();
       aiControllers[type] = controller;
@@ -818,8 +987,8 @@
         const payload = {
           mode: type,
           crop: isGeneral ? "Semua tanaman" : requestedCrop,
-          latest: requestedData,
-          ...(!isGeneral ? { idealRanges: ranges, stress: stressOf(requestedData, ranges) } : {}),
+          latest: pickData(latest),
+          ...(!isGeneral ? { idealRanges: ranges, stress: stressOf(latest, ranges) } : {}),
           history: hist.slice(-60)
             .filter((_, i, a) => i % Math.max(1, Math.floor(a.length / 12)) === 0)
             .slice(-12)
@@ -835,13 +1004,13 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
         if (!isGeneral && selectedCrop !== requestedCrop) return;
-        renderAIResult(out, data, isGeneral, requestedCrop, requestedData);
+        renderAIResponse(data, type, requestedCrop);
         meta.textContent = "Dianalisis " + new Date().toLocaleTimeString("id-ID");
       } catch (e) {
         if (e.name === "AbortError") return;
         out.className = "ai-output err";
         const detail = location.protocol === "file:"
-          ? "Halaman dibuka langsung dari file (file://), sehingga koneksi AI diblokir oleh CORS. Tutup tab ini, jalankan Start-TanahSehat.ps1 dari folder proyek, lalu buka http://localhost:8123/tanahsehat_single.html."
+          ? "Halaman dibuka langsung dari file (file://), sehingga koneksi AI diblokir oleh CORS. Jalankan dari folder proyek dengan `py -m http.server 8132`, lalu buka http://127.0.0.1:8132/tanahsehat_single.html."
           : e.message === "Failed to fetch"
             ? "Koneksi ke AI gagal. Periksa internet, pastikan URL Worker benar dan sudah di-deploy, serta domain halaman diizinkan pada ALLOWED_ORIGINS di Worker."
             : e.message;
@@ -852,56 +1021,6 @@
           aiBusy[type] = false;
           button.disabled = false;
         }
-      }
-    }
-
-    function renderAIResult(out, data, isGeneral, requestedCrop, sample) {
-      out.replaceChildren();
-      const label = document.createElement("p");
-      label.className = "output-label";
-      label.textContent = "Analisis kondisi sensor";
-      out.append(label);
-      const crops = isGeneral ? closestCrops(sample) : [requestedCrop];
-      if (crops.length && crops.every((crop) => Object.prototype.hasOwnProperty.call(CROPS, crop))) {
-        const recommendation = document.createElement("p");
-        recommendation.className = "ai-recommendation";
-        recommendation.textContent = isGeneral
-          ? (crops.length > 1
-            ? "Kecocokan parameter setara untuk: " + crops.join(", ")
-            : "Tanaman paling mendekati dari rentang pembanding: " + crops[0])
-          : "Tanaman yang dinilai: " + crops[0];
-        out.append(recommendation);
-      }
-      const analysis = document.createElement("p");
-      analysis.textContent = typeof data.analysis === "string" && data.analysis.trim()
-        ? data.analysis
-        : "AI tidak memberikan uraian analisis.";
-      out.append(analysis);
-
-      const citations = isGeneral
-        ? Object.values(CROP_CITATIONS).flat()
-        : CROP_CITATIONS[requestedCrop] || [];
-      if (citations.length) {
-        const row = document.createElement("div");
-        row.className = "ai-citations";
-        const text = document.createElement("span");
-        text.className = "ai-citations-label";
-        text.textContent = "Sitasi jurnal (klik untuk membaca PDF):";
-        row.append(text);
-        citations.forEach((id) => {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "citation-link";
-          button.dataset.openCitation = id;
-          button.textContent = JOURNALS[id].label + " " + JOURNALS[id].short;
-          row.append(button);
-        });
-        out.append(row);
-      } else {
-        const note = document.createElement("p");
-        note.className = "ai-citations-label";
-        note.textContent = "Tidak ada sitasi tanaman terkurasi untuk rentang khusus ini.";
-        out.append(note);
       }
     }
 
@@ -919,5 +1038,6 @@
     setInterval(fetchLatest, POLL_MS);
     setInterval(fetchHist, HIST_MS);
   </script>
-</body>
-</html>
+
+
+</body></html>
