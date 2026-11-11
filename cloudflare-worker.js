@@ -19,8 +19,13 @@ const ALLOWED_ORIGINS = new Set([
 const KEYS = ["moist", "ph", "temp"];
 const CROP_RANGES = {
   Padi: { moist: [60, 80], ph: [5.5, 6.5], temp: [25, 37] },
-  Cabai: { moist: [50, 70], ph: [6, 6.8], temp: [18, 30] },
   Jagung: { moist: [50, 75], ph: [5.8, 7], temp: [20, 32] },
+  Cabai: { moist: [50, 70], ph: [6, 6.8], temp: [18, 30] },
+};
+const CROP_CITATIONS = {
+  Padi: ["rice-acid-soil"],
+  Jagung: ["maize-water-deficit"],
+  Cabai: ["chili-water-stress"],
 };
 
 const SYSTEM = `Anda asisten agronomi untuk alat pemantau tanah berbasis sensor ESP32.
@@ -28,12 +33,13 @@ Tugas: menilai kondisi tanah dari data sensor dan rentang ideal yang diberikan, 
 Aturan:
 - Ringkas dan jelas, maksimal sekitar 180 kata.
 - Bandingkan kelembapan, pH, dan suhu satu per satu dengan rentang ideal tanaman. Nyatakan mana yang sudah cocok, terlalu rendah, atau terlalu tinggi.
-- Pada mode analisis umum, bandingkan hanya tanaman yang rentangnya dicantumkan dan sebutkan mana yang paling sesuai serta parameter pembatasnya. Untuk tanaman khusus, perlakukan nama sebagai label dan gunakan rentang yang diberikan.
+- Pada mode analisis umum, sebutkan kandidat tanaman yang dihitung sistem dan jelaskan kecocokan setiap parameter terhadap kandidat itu. Kandidat tersebut hanya yang paling mendekati dari rentang yang tercantum, bukan jaminan tanaman akan tumbuh baik.
+- Untuk tanaman pilihan, bandingkan semua parameter dengan rentang yang diberikan.
 - Beri saran tindakan hanya untuk parameter yang bermasalah: misalnya atur penyiraman/drainase untuk kelembapan, atau koreksi pH secara bertahap berdasarkan hasil uji tanah. Untuk suhu, sarankan pengelolaan lingkungan seperti mulsa atau naungan; jangan menyarankan bahan tambahan yang tidak didukung data.
 - Gunakan hanya data yang diberikan. Jangan mengarang angka atau penyebab pasti, dan jangan menyimpulkan kandungan hara.
 - Jika data tampak janggal (misalnya kelembapan di luar 0-100%, suhu di luar rentang wajar, atau pH di luar 3-9), sebut kemungkinan sensor perlu dikalibrasi atau diperiksa.
 - Bila ada riwayat, jelaskan tren (naik, turun, stabil).
-- Jangan mengarang sumber, kutipan, atau sitasi jurnal.
+- Jangan menulis sitasi atau menyebut sumber jurnal. Dashboard melampirkan sitasi yang sudah diverifikasi secara terpisah.
 - Jangan merekomendasikan pemupukan karena sistem ini hanya mengukur kelembapan, pH, dan suhu tanah.`;
 
 export default {
@@ -104,10 +110,28 @@ export default {
     if (!general && !validRanges(ranges)) {
       return reply({ error: "Rentang ideal tanaman belum tersedia atau tidak valid" }, 400);
     }
+    const cropDistances = general
+      ? Object.keys(CROP_CITATIONS).map((name) => {
+        const distance = KEYS.reduce((total, key) => {
+          const [min, max] = CROP_RANGES[name][key];
+          const value = body.latest[key];
+          const outside = value < min ? min - value : value > max ? value - max : 0;
+          return total + outside / (max - min);
+        }, 0) / KEYS.length;
+        return { name, distance };
+      })
+      : [];
+    const bestDistance = cropDistances.length
+      ? Math.min(...cropDistances.map((item) => item.distance))
+      : null;
+    const recommendedCrops = cropDistances
+      .filter((item) => Math.abs(item.distance - bestDistance) < 1e-9)
+      .map((item) => item.name);
+    const recommendedCrop = recommendedCrops[0] || null;
 
     const prompt =
       (general
-        ? `Mode: analisis umum. Bandingkan data dengan pilihan tanaman yang rentang idealnya tercantum di bawah; jangan menambah kandidat di luar daftar.\nRentang ideal tanaman: ${Object.entries(CROP_RANGES).map(([name, range]) => `${name}: kelembapan ${range.moist[0]}-${range.moist[1]}%, pH ${range.ph[0]}-${range.ph[1]}, suhu ${range.temp[0]}-${range.temp[1]}°C`).join("; ")}\n`
+        ? `Mode: analisis umum. Bandingkan data hanya dengan tanaman berikut; jangan menambah kandidat di luar daftar. Kandidat terdekat menurut jarak rata-rata ternormalisasi dari tiga parameter sensor: ${recommendedCrops.join(", ")}. Jika ada beberapa kandidat, jelaskan bahwa kecocokannya setara. Tegaskan bahwa hasil ini hanya kecocokan relatif dari parameter yang diukur, bukan kepastian agronomis.\nRentang ideal tanaman: ${Object.entries(CROP_RANGES).map(([name, range]) => `${name}: kelembapan ${range.moist[0]}-${range.moist[1]}%, pH ${range.ph[0]}-${range.ph[1]}, suhu ${range.temp[0]}-${range.temp[1]}°C`).join("; ")}\n`
         : `Tanaman: ${crop}\nRentang ideal untuk tanaman ini: kelembapan ${ranges.moist[0]}-${ranges.moist[1]}%, pH ${ranges.ph[0]}-${ranges.ph[1]}, suhu ${ranges.temp[0]}-${ranges.temp[1]}°C\n`) +
       `Pembacaan terbaru: ${JSON.stringify(pick(body.latest))}\n` +
       `Satuan: moist=%, ph=pH, temp=derajat Celsius\n` +
@@ -158,6 +182,14 @@ export default {
       return reply({ error: "Gemini tidak mengembalikan teks (mungkin diblokir atau melewati batas token)" }, 502);
     }
 
-    return reply({ analysis: text });
+    const citations = general
+      ? Object.values(CROP_CITATIONS).flat()
+      : CROP_CITATIONS[crop] || [];
+    return reply({
+      analysis: text,
+      recommendedCrop,
+      recommendedCrops,
+      citations,
+    });
   },
 };

@@ -74,6 +74,11 @@
     .auto-label input { min-height:auto; accent-color:var(--accent); }
     .ai-output,.crop-summary { min-height:115px; padding:13px 14px; border:1px solid #e5f1e7; border-radius:13px; background:#f0faf2; font-size:.82rem; line-height:1.6; white-space:pre-wrap; }
     .ai-output.err { border-color:#f3c4c4; color:var(--bad); background:#fff2f2; }
+    .ai-output .output-label { white-space:normal; }
+    .ai-recommendation { margin:0 0 8px; color:#24583a; font-weight:800; white-space:normal; }
+    .ai-citations { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:10px; padding-top:9px; border-top:1px solid #dcebdd; white-space:normal; }
+    .ai-citations-label { color:var(--muted); font-size:.74rem; }
+    .citation-link { padding:4px 8px; border:1px solid #b9d8c0; border-radius:999px; color:#24583a; background:#fff; font-size:.72rem; font-weight:800; }
     .output-label { margin:0 0 8px; color:var(--muted); font-size:.66rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; }
     .crop-switch { display:flex; flex-wrap:wrap; gap:7px; }
     .crop-switch button { min-height:34px; padding:7px 12px; border:1px solid var(--line); border-radius:999px; color:var(--text); background:#fff; font-size:.78rem; font-weight:700; }
@@ -198,35 +203,29 @@
     <section class="journal-card" aria-labelledby="journalTitle">
       <div class="journal-heading">
         <span class="heading-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M8 13h8M8 17h8"/></svg></span>
-        <div><h2 id="journalTitle">Pembaca Jurnal</h2><p>Pilih jurnal dan unggah PDF untuk membacanya langsung di dashboard.</p></div>
+        <div><h2 id="journalTitle">Pembaca Jurnal</h2><p>Klik sitasi pada analisis AI untuk membuka PDF jurnal langsung di panel ini.</p></div>
       </div>
       <div id="journalTabs" class="journal-tabs" role="tablist" aria-label="Jurnal referensi">
-        <button type="button" role="tab" data-journal="soil" aria-pressed="true">[1] Kondisi tanah</button>
-        <button type="button" role="tab" data-journal="rice" aria-pressed="false">[2] Budidaya padi</button>
-        <button type="button" role="tab" data-journal="irrigation" aria-pressed="false">[3] Irigasi &amp; mulsa</button>
+        <button type="button" role="tab" data-journal="rice-acid-soil" aria-pressed="true">[1] Padi &amp; tanah sulfat masam</button>
+        <button type="button" role="tab" data-journal="maize-water-deficit" aria-pressed="false">[2] Jagung &amp; defisit air</button>
+        <button type="button" role="tab" data-journal="chili-water-stress" aria-pressed="false">[3] Cabai &amp; defisit irigasi</button>
       </div>
-      <input id="journalFile" type="file" accept="application/pdf,.pdf" hidden>
       <div class="reader">
         <div class="pdf-panel">
           <div class="reader-header">
-            <span id="journalFileName">PDF jurnal belum dipilih</span>
+            <span id="journalFileName">Memuat PDF jurnal...</span>
             <span class="reader-tools">
               <span id="journalPage">PDF</span>
-              <a id="journalFull" href="#" target="_blank" rel="noopener" aria-label="Buka PDF di tab baru">↗</a>
+              <a id="journalFull" href="#" target="_blank" rel="noopener noreferrer" aria-label="Buka PDF di tab baru">↗</a>
             </span>
           </div>
-          <div id="pdfEmpty" class="pdf-empty">
-            <strong>Belum ada file jurnal untuk ditampilkan.</strong>
-            <p>PDF referensi tidak disertakan bersama dashboard. Pilih file jurnal yang sesuai agar bisa dibaca di sini.</p>
-            <button id="chooseJournalBtn" class="btn small" type="button">Pilih file jurnal PDF</button>
-          </div>
-          <iframe id="pdfFrame" class="pdf-frame" title="Pratinjau jurnal PDF" hidden></iframe>
+          <iframe id="pdfFrame" class="pdf-frame" title="Pratinjau jurnal PDF"></iframe>
         </div>
         <div class="reader-notes">
-          <div class="reader-note"><h3>SUMBER TERPILIH</h3><p id="journalDescription">Jurnal kondisi tanah — unggah PDF milik Anda untuk melihat dokumen ini.</p></div>
-          <div class="reader-note"><h3>BAGIAN DI JURNAL</h3><p><span class="highlight-key" aria-hidden="true"></span>Tandai bagian relevan pada dokumen<br><span class="muted">Rujuk nomor halaman dan penulis pada PDF asli.</span></p></div>
-          <div class="reader-note"><h3>CATATAN PEMBACA</h3><p>Panel ini hanya menampilkan dokumen yang Anda pilih. Dashboard tidak mengarang isi atau kutipan jurnal.</p></div>
-          <div><button id="journalFullBtn" class="btn secondary small" type="button" disabled>Buka jurnal layar penuh</button></div>
+          <div class="reader-note"><h3>SITASI TERPILIH</h3><p id="journalDescription"></p></div>
+          <div class="reader-note"><h3>RELEVANSI</h3><p id="journalRelevance"></p></div>
+          <div class="reader-note"><h3>BATASAN</h3><p id="journalLimit"></p></div>
+          <div><a id="journalFullBtn" class="btn secondary small" href="#" target="_blank" rel="noopener noreferrer">Buka PDF di tab baru</a></div>
         </div>
       </div>
     </section>
@@ -280,8 +279,50 @@
     let latest = null, hist = [];
     const aiBusy = { general: false, crop: false };
     const aiControllers = { general: null, crop: null };
-    let aiTimer = null, selectedJournal = "soil";
-    const journalUrls = {};
+    let aiTimer = null, selectedJournal = "rice-acid-soil";
+    const JOURNALS = {
+      "rice-acid-soil": {
+        label: "[1]",
+        short: "Padi & tanah sulfat masam",
+        title: "Improving Soil Properties and Rice Yield on Saline-affected Acid Sulfate Soil by Controlled-release Fertilizer",
+        authors: "Tất Anh Thư & Võ Quang Minh (2022)",
+        publication: "Indian Journal of Agricultural Research",
+        doi: "10.18805/ijare.af-753",
+        pdf: "https://arccarticles.s3.amazonaws.com/PublishedArticle/Final-attachment-published-AF-753-6089603e9087340b9bdcbbb1.pdf",
+        license: "",
+        relevance: "Studi padi pada tanah sulfat masam terdampak salinitas di Vietnam; konteksnya spesifik dan bukan uji rentang pH sensor ini.",
+        limit: "Penelitian menguji pupuk lepas terkendali. Sitasi ini tidak membenarkan saran pupuk dari sensor kelembapan, pH, dan suhu saja."
+      },
+      "maize-water-deficit": {
+        label: "[2]",
+        short: "Jagung & defisit air",
+        title: "Yield Response of Spring Maize to Inter-Row Subsoiling and Soil Water Deficit in Northern China",
+        authors: "Zhandong Liu et al. (2016)",
+        publication: "PLOS ONE, 11(4), e0153809",
+        doi: "10.1371/journal.pone.0153809",
+        pdf: "./journals/maize-water-deficit.pdf",
+        license: "Salinan PDF lokal berlisensi Creative Commons Attribution 4.0 (CC BY 4.0); atribusi lengkap dicantumkan di atas.",
+        relevance: "Penelitian lapangan tentang respons hasil jagung terhadap defisit air dan pengolahan tanah pada lokasi penelitian di Tiongkok utara.",
+        limit: "Kondisi lokasi dan perlakuan penelitian tertentu; kelembapan sensor saja tidak cukup untuk menyimpulkan hasil panen atau menentukan irigasi."
+      },
+      "chili-water-stress": {
+        label: "[3]",
+        short: "Cabai & defisit irigasi",
+        title: "Influence of deficit irrigation levels on agronomic performance of pepper (Capsicum annuum L.) under drip at Alage, Central Rift Valley of Ethiopia",
+        authors: "Seid Mohammed & Arebu Hussen (2023)",
+        publication: "PLOS ONE, 18(11), e0280639",
+        doi: "10.1371/journal.pone.0280639",
+        pdf: "./journals/pepper-deficit-irrigation.pdf",
+        license: "Salinan PDF lokal berlisensi Creative Commons Attribution 4.0 (CC BY 4.0); atribusi lengkap dicantumkan di atas.",
+        relevance: "Eksperimen lapangan cabai di Ethiopia membandingkan tingkat defisit air pada irigasi tetes dan mengukur respons agronomis serta hasil.",
+        limit: "Hasil bergantung pada lokasi dan perlakuan penelitian; angka kelembapan sensor ini bukan pengganti jadwal irigasi dalam studi."
+      }
+    };
+    const CROP_CITATIONS = {
+      Padi: ["rice-acid-soil"],
+      Jagung: ["maize-water-deficit"],
+      Cabai: ["chili-water-stress"]
+    };
     let simMode = false, simTimer = null, lastSimHistory = 0;
 
     function dev(v, r) {
@@ -290,6 +331,16 @@
     }
 
     const stressOf = (o, r) => Object.entries(WEIGHTS).reduce((s, [k, w]) => s + dev(o[k], r[k]) * w * 100, 0);
+    const closestCrops = (sample) => {
+      const distances = Object.keys(CROP_CITATIONS).map((name) => ({
+        name,
+        distance: stressOf(sample, CROPS[name])
+      }));
+      const bestDistance = Math.min(...distances.map((item) => item.distance));
+      return distances
+        .filter((item) => Math.abs(item.distance - bestDistance) < 1e-9)
+        .map((item) => item.name);
+    };
     const lvlClass = (d) => (d === 0 ? "ok" : d > 0.5 ? "bad" : "warn");
 
     function setStatus(on, text) {
@@ -345,6 +396,13 @@
       };
       $("param").onchange = drawChart;
       $("csv").onclick = downloadCsv;
+      document.addEventListener("click", (event) => {
+        const citation = event.target.closest("button[data-open-citation]");
+        if (citation && JOURNALS[citation.dataset.openCitation]) {
+          selectJournal(citation.dataset.openCitation);
+          $("journalTitle").scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      });
       $("simBtn").onclick = toggleSimulation;
       $("scenario").onchange = () => {
         if (!simMode) return;
@@ -427,54 +485,33 @@
     }
 
     function buildJournalUI() {
-      const descriptions = {
-        soil: "Jurnal kondisi tanah — unggah PDF milik Anda untuk melihat dokumen ini.",
-        rice: "Jurnal budidaya padi — unggah PDF milik Anda untuk melihat dokumen ini.",
-        irrigation: "Jurnal irigasi dan mulsa — unggah PDF milik Anda untuk melihat dokumen ini.",
-      };
       $("journalTabs").addEventListener("click", (event) => {
         const tab = event.target.closest("button[data-journal]");
-        if (!tab) return;
-        selectedJournal = tab.dataset.journal;
-        $("journalTabs").querySelectorAll("button[data-journal]").forEach((item) =>
-          item.setAttribute("aria-pressed", String(item === tab))
-        );
-        $("journalDescription").textContent = descriptions[selectedJournal];
-        renderJournal();
+        if (tab && JOURNALS[tab.dataset.journal]) selectJournal(tab.dataset.journal);
       });
-      $("chooseJournalBtn").onclick = () => $("journalFile").click();
-      $("journalFile").onchange = (event) => {
-        const file = event.target.files[0];
-        event.target.value = "";
-        if (!file) return;
-        if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-          $("journalDescription").textContent = "File tidak dikenali sebagai PDF. Pilih dokumen .pdf.";
-          return;
-        }
-        const previous = journalUrls[selectedJournal];
-        if (previous) URL.revokeObjectURL(previous.url);
-        journalUrls[selectedJournal] = { file, url: URL.createObjectURL(file) };
-        renderJournal();
-      };
-      $("journalFullBtn").onclick = () => {
-        const selected = journalUrls[selectedJournal];
-        if (selected) window.open(selected.url, "_blank", "noopener");
-      };
-      $("journalFull").onclick = (event) => {
-        if (!journalUrls[selectedJournal]) event.preventDefault();
-      };
+      renderJournal();
+    }
+
+    function selectJournal(id) {
+      if (!JOURNALS[id]) return;
+      selectedJournal = id;
+      $("journalTabs").querySelectorAll("button[data-journal]").forEach((item) =>
+        item.setAttribute("aria-pressed", String(item.dataset.journal === id))
+      );
       renderJournal();
     }
 
     function renderJournal() {
-      const selected = journalUrls[selectedJournal];
-      $("pdfEmpty").hidden = Boolean(selected);
-      $("pdfFrame").hidden = !selected;
-      $("pdfFrame").src = selected ? selected.url + "#toolbar=1&navpanes=0" : "about:blank";
-      $("journalFileName").textContent = selected ? selected.file.name : "PDF jurnal belum dipilih";
-      $("journalFullBtn").disabled = !selected;
-      $("journalFull").href = selected ? selected.url : "#";
-      $("journalFull").tabIndex = selected ? 0 : -1;
+      const journal = JOURNALS[selectedJournal];
+      if (!journal) return;
+      $("pdfFrame").src = journal.pdf + "#toolbar=1&navpanes=0";
+      $("pdfFrame").title = "PDF: " + journal.title;
+      $("journalFileName").textContent = journal.title;
+      $("journalDescription").textContent = `${journal.authors}. ${journal.title}. ${journal.publication}. DOI: ${journal.doi}.`;
+      $("journalRelevance").textContent = journal.relevance;
+      $("journalLimit").textContent = journal.limit + (journal.license ? " " + journal.license : " PDF dimuat dari situs penerbit dan memerlukan koneksi internet.");
+      $("journalFull").href = journal.pdf;
+      $("journalFullBtn").href = journal.pdf;
     }
 
     function applyScenario(s, phase, wave) {
@@ -773,6 +810,7 @@
       out.textContent = "AI sedang menganalisis...";
 
       const requestedCrop = selectedCrop;
+      const requestedData = pickData(latest);
       const ranges = cropR();
       const controller = new AbortController();
       aiControllers[type] = controller;
@@ -780,8 +818,8 @@
         const payload = {
           mode: type,
           crop: isGeneral ? "Semua tanaman" : requestedCrop,
-          latest: pickData(latest),
-          ...(!isGeneral ? { idealRanges: ranges, stress: stressOf(latest, ranges) } : {}),
+          latest: requestedData,
+          ...(!isGeneral ? { idealRanges: ranges, stress: stressOf(requestedData, ranges) } : {}),
           history: hist.slice(-60)
             .filter((_, i, a) => i % Math.max(1, Math.floor(a.length / 12)) === 0)
             .slice(-12)
@@ -797,7 +835,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
         if (!isGeneral && selectedCrop !== requestedCrop) return;
-        out.textContent = data.analysis || "(Tidak ada jawaban)";
+        renderAIResult(out, data, isGeneral, requestedCrop, requestedData);
         meta.textContent = "Dianalisis " + new Date().toLocaleTimeString("id-ID");
       } catch (e) {
         if (e.name === "AbortError") return;
@@ -814,6 +852,56 @@
           aiBusy[type] = false;
           button.disabled = false;
         }
+      }
+    }
+
+    function renderAIResult(out, data, isGeneral, requestedCrop, sample) {
+      out.replaceChildren();
+      const label = document.createElement("p");
+      label.className = "output-label";
+      label.textContent = "Analisis kondisi sensor";
+      out.append(label);
+      const crops = isGeneral ? closestCrops(sample) : [requestedCrop];
+      if (crops.length && crops.every((crop) => Object.prototype.hasOwnProperty.call(CROPS, crop))) {
+        const recommendation = document.createElement("p");
+        recommendation.className = "ai-recommendation";
+        recommendation.textContent = isGeneral
+          ? (crops.length > 1
+            ? "Kecocokan parameter setara untuk: " + crops.join(", ")
+            : "Tanaman paling mendekati dari rentang pembanding: " + crops[0])
+          : "Tanaman yang dinilai: " + crops[0];
+        out.append(recommendation);
+      }
+      const analysis = document.createElement("p");
+      analysis.textContent = typeof data.analysis === "string" && data.analysis.trim()
+        ? data.analysis
+        : "AI tidak memberikan uraian analisis.";
+      out.append(analysis);
+
+      const citations = isGeneral
+        ? Object.values(CROP_CITATIONS).flat()
+        : CROP_CITATIONS[requestedCrop] || [];
+      if (citations.length) {
+        const row = document.createElement("div");
+        row.className = "ai-citations";
+        const text = document.createElement("span");
+        text.className = "ai-citations-label";
+        text.textContent = "Sitasi jurnal (klik untuk membaca PDF):";
+        row.append(text);
+        citations.forEach((id) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "citation-link";
+          button.dataset.openCitation = id;
+          button.textContent = JOURNALS[id].label + " " + JOURNALS[id].short;
+          row.append(button);
+        });
+        out.append(row);
+      } else {
+        const note = document.createElement("p");
+        note.className = "ai-citations-label";
+        note.textContent = "Tidak ada sitasi tanaman terkurasi untuk rentang khusus ini.";
+        out.append(note);
       }
     }
 
