@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TanahSehat</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#2e7d32" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <style>
+    :root {
+      --bg: #f5f7f2;
+      --card: #ffffff;
+      --line: #dfe7d8;
+      --text: #1f2a20;
+      --muted: #5f6f61;
+      --accent: #2e7d32;
+      --ok: #2e7d32;
+      --warn: #f39c12;
+      --bad: #d64545;
+      --off: #9aa39d;
+      --shadow: 0 10px 28px rgba(24, 39, 18, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; background: var(--bg); color: var(--text); }
+    body { min-height: 100vh; }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+    header { margin-bottom: 18px; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 3vw, 2.9rem); }
+    .sub { margin: 0; color: var(--muted); }
+
+    .bar {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+      margin: 16px 0;
+    }
+    .bar label { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+    select, button, input { font: inherit; }
+    select, button {
+      border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--text); padding: 10px 12px;
+      box-shadow: var(--shadow);
+    }
+    button { cursor: pointer; background: linear-gradient(180deg, #edf7ea, #dff1dd); }
+    button:disabled { opacity: 0.65; cursor: not-allowed; }
+    .status { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
+    .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; background: var(--off); }
+    .dot.on { background: var(--ok); box-shadow: 0 0 0 4px rgba(46,125,50,.12); }
+    .dot.off { background: var(--bad); }
+
+    .stress {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 18px 20px;
+    }
+    .big { display: flex; flex-direction: column; }
+    #sv { font-size: clamp(2.1rem, 5vw, 4rem); font-weight: 800; }
+    #sl { color: var(--muted); }
+    .meter { width: min(100%, 420px); height: 18px; background: rgba(0,0,0,.06); border-radius: 999px; overflow: hidden; }
+    .meter i { display: block; height: 100%; width: 0; transition: width .3s ease, background .3s ease; }
+
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px;
+      margin: 18px 0 22px;
+    }
+    .s {
+      background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 14px; box-shadow: var(--shadow);
+    }
+    .s h3 { margin: 0 0 12px; font-size: 0.98rem; color: var(--muted); }
+    .v { display: flex; align-items: baseline; gap: 8px; }
+    .v b { font-size: 1.8rem; }
+    .v span { color: var(--muted); }
+    .chip {
+      display: inline-block; margin-top: 12px; padding: 7px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700;
+      background: #e9efe4; color: var(--text);
+    }
+    .chip.ok { background: rgba(46,125,50,.12); color: var(--ok); }
+    .chip.warn { background: rgba(243,156,18,.12); color: var(--warn); }
+    .chip.bad { background: rgba(214,69,69,.12); color: var(--bad); }
+
+    .card {
+      background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 18px 20px; box-shadow: var(--shadow);
+      margin-top: 8px;
+    }
+    .diag p { margin: 0.4rem 0; line-height: 1.6; }
+    .diag strong.ok { color: var(--ok); }
+    .diag strong.warn { color: var(--warn); }
+    .diag strong.bad { color: var(--bad); }
+
+    .note { color: var(--muted); font-size: 0.9rem; }
+    .ai { border-radius: 12px; padding: 16px; background: #f8faf7; border: 1px solid var(--line); line-height: 1.7; white-space: pre-wrap; }
+    .ai.err { background: #fff2f2; border-color: #f3c4c4; color: var(--bad); }
+
+    canvas { width: 100%; height: 260px; display: block; background: #fff; border-radius: 12px; }
+    h2 { margin: 26px 0 8px; }
+    .bar .note { margin-left: auto; }
+
+    @media (max-width: 640px) {
+      .bar { align-items: flex-start; }
+      .bar > * { width: 100%; }
+      .bar label { justify-content: space-between; }
+      .bar .note { margin-left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>TanahSehat</h1>
+      <p class="sub">Monitoring kelembapan, pH, dan suhu tanah dari ESP32 lewat Firebase.</p>
+    </header>
+
+    <div class="bar">
+      <label>Tanaman
+        <select id="crop">
+          <option>Padi</option>
+          <option>Cabai</option>
+          <option>Jagung</option>
+        </select>
+      </label>
+      <span class="status"><i id="dot" class="dot"></i><span id="stat">Menghubungkan...</span></span>
+      <button id="simBtn" type="button">Mulai simulasi</button>
+      <select id="scenario" title="Skenario simulasi">
+        <option value="normal">Skenario: Normal</option>
+        <option value="kering">Skenario: Tanah kering</option>
+        <option value="asam">Skenario: Tanah asam</option>
+        <option value="panas">Skenario: Suhu tinggi</option>
+      </select>
+    </div>
+
+    <section class="card stress" aria-live="polite">
+      <div class="big">
+        <span id="sv">--</span>
+        <small id="sl">Indeks stres tanah</small>
+      </div>
+      <div class="meter"><i id="meter"></i></div>
+    </section>
+
+    <section class="grid" id="grid"></section>
+
+    <h2>Diagnosis dan rekomendasi</h2>
+    <section class="card diag" id="diag"><p>Menunggu data dari alat...</p></section>
+
+    <h2>Analisis AI</h2>
+    <section class="card">
+      <div class="bar" style="margin-top:0">
+        <button id="aiBtn">Analisis sekarang</button>
+        <label><input type="checkbox" id="aiAuto"> Otomatis tiap 10 menit</label>
+        <span class="note" id="aiMeta" style="margin:0"></span>
+      </div>
+      <div id="aiOut" class="ai">Tekan tombol untuk meminta AI menafsirkan kondisi tanah.</div>
+    </section>
+
+    <h2>Riwayat</h2>
+    <div class="bar">
+      <label>Parameter <select id="param"></select></label>
+      <button id="csv">Unduh riwayat (CSV)</button>
+    </div>
+    <section class="card"><canvas id="chart"></canvas></section>
+
+    <p class="note">Ambang tiap tanaman bersifat ilustratif. Sesuaikan dengan referensi penelitian Anda.</p>
+  </main>
+
+  <script>
+    // ====== PENGATURAN ======
+    const FIREBASE_URL = "https://NAMA-PROJECT-default-rtdb.firebaseio.com";
+    const AI_URL = "https://super-surf-b29e.panjaluarmy.workers.dev";
+    // ======================
+
+    const POLL_MS = 3000;
+    const HIST_MS = 15000;
+    const ONLINE_MS = 30000;
+
+    const CROPS = {
+      Padi:   { moist: [60, 90], ph: [5.5, 6.5], temp: [20, 35] },
+      Cabai:  { moist: [50, 70], ph: [6, 6.8],   temp: [18, 30] },
+      Jagung: { moist: [50, 75], ph: [5.8, 7],   temp: [20, 32] },
+    };
+
+    const SENS = [
+      { k: "moist", n: "Kelembapan tanah", u: "%", d: 0 },
+      { k: "ph",    n: "pH tanah",         u: "",  d: 1 },
+      { k: "temp",  n: "Suhu tanah",       u: "°C", d: 1 },
+    ];
+
+    const WEIGHTS = { moist: 1 / 3, ph: 1 / 3, temp: 1 / 3 };
+    const REC = {
+      moist: ["Perlu penyiraman atau perbaiki irigasi.", "Tanah terlalu basah, perbaiki drainase."],
+      ph: ["Tanah terlalu asam, tambahkan kapur dolomit.", "Tanah terlalu basa, tambahkan bahan organik atau belerang."],
+      temp: ["Suhu tanah terlalu rendah; periksa kondisi lingkungan dan pertumbuhan tanaman.", "Suhu tanah terlalu tinggi; jaga kelembapan dan lindungi tanah dari panas berlebih."],
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const cropR = () => CROPS[$("crop").value];
+    const valid = (o) => o && SENS.every((s) => typeof o[s.k] === "number" && Number.isFinite(o[s.k]));
+    const pickData = (o) => Object.fromEntries(SENS.map((s) => [s.k, o[s.k]]));
+    let latest = null, hist = [];
+    let aiBusy = false, aiTimer = null;
+    let simMode = false, simTimer = null, lastSimHistory = 0;
+
+    function dev(v, r) {
+      if (v >= r[0] && v <= r[1]) return 0;
+      return Math.min(1, (v < r[0] ? r[0] - v : v - r[1]) / (r[1] - r[0]));
+    }
+
+    const stressOf = (o, r) => Object.entries(WEIGHTS).reduce((s, [k, w]) => s + dev(o[k], r[k]) * w * 100, 0);
+    const lvlClass = (d) => (d === 0 ? "ok" : d > 0.5 ? "bad" : "warn");
+
+    function setStatus(on, text) {
+      const dot = $("dot");
+      const stat = $("stat");
+      dot.className = "dot " + (on === null ? "" : on ? "on" : "off");
+      stat.textContent = text;
+    }
+
+    function buildUI() {
+      $("grid").innerHTML = SENS.map((s) => `
+        <div class="s">
+          <h3>${s.n}</h3>
+          <div class="v"><b id="v_${s.k}">--</b><span>${s.u}</span></div>
+          <span class="chip" id="c_${s.k}"></span>
+        </div>
+      `).join("");
+
+      $("param").innerHTML = '<option value="stress">Indeks stres tanah</option>' +
+        SENS.map((s) => `<option value="${s.k}">${s.n}</option>`).join("");
+
+      $("crop").onchange = () => { renderLatest(); drawChart(); };
+      $("param").onchange = drawChart;
+      $("csv").onclick = downloadCsv;
+      $("simBtn").onclick = toggleSimulation;
+      $("scenario").onchange = () => {
+        if (!simMode) return;
+        hist = seedHist(Date.now());
+        updateSimulation();
+        drawChart();
+      };
+      window.addEventListener("resize", drawChart);
+    }
+
+    function applyScenario(s, phase, wave) {
+      const sc = $("scenario").value;
+      if (sc === "kering") s.moist = Math.round(26 + wave * 3);
+      if (sc === "asam") s.ph = Number((4.8 + Math.sin(phase * 0.45) * 0.1).toFixed(1));
+      if (sc === "panas") s.temp = Number((38 + Math.sin(phase * 0.25)).toFixed(1));
+    }
+
+    function seedHist(now) {
+      return Array.from({ length: 12 }, (_, i) =>
+        simulatedSample(now - (11 - i) * HIST_MS, (now - (11 - i) * HIST_MS) / 30000)
+      );
+    }
+
+    function simulatedSample(ts, phase) {
+      const wave = Math.sin(phase);
+      const s = {
+        moist: Math.round(59 + wave * 5 + (Math.random() - 0.5) * 2),
+        ph: Number((6 + Math.sin(phase * 0.45) * 0.12).toFixed(1)),
+        temp: Number((26 + Math.sin(phase * 0.2) * 2).toFixed(1)),
+        ts
+      };
+      applyScenario(s, phase, wave);
+      return s;
+    }
+
+    function updateSimulation() {
+      if (!simMode) return;
+      const now = Date.now();
+      latest = simulatedSample(now, now / 30000);
+      renderLatest();
+      setStatus(true, "Simulasi aktif — data contoh");
+
+      if (now - lastSimHistory >= HIST_MS) {
+        lastSimHistory = now;
+        hist.push(latest);
+        if (hist.length > 120) hist.shift();
+        drawChart();
+      }
+    }
+
+    function toggleSimulation() {
+      simMode = !simMode;
+      const button = $("simBtn");
+
+      if (simMode) {
+        button.textContent = "Hentikan simulasi";
+        const now = Date.now();
+        hist = seedHist(now);
+        lastSimHistory = now;
+        updateSimulation();
+        drawChart();
+        simTimer = setInterval(updateSimulation, POLL_MS);
+        return;
+      }
+
+      clearInterval(simTimer);
+      simTimer = null;
+      button.textContent = "Mulai simulasi";
+      latest = null;
+      setStatus(null, "Menghubungkan kembali ke Firebase...");
+      $("diag").innerHTML = "<p>Menunggu data dari alat...</p>";
+      $("sv").textContent = "--";
+      $("sv").style.color = "";
+      $("sl").textContent = "Indeks stres tanah";
+      $("meter").style.width = "0";
+      SENS.forEach((s) => {
+        $("v_" + s.k).textContent = "--";
+        $("c_" + s.k).textContent = "";
+        $("c_" + s.k).className = "chip";
+      });
+      hist = [];
+      drawChart();
+      fetchLatest();
+      fetchHist();
+    }
+
+    function renderLatest() {
+      if (!valid(latest)) return;
+      const r = cropR();
+      const issues = [];
+
+      SENS.forEach((s) => {
+        const v = latest[s.k];
+        const d = dev(v, r[s.k]);
+        const low = v < r[s.k][0];
+        $("v_" + s.k).textContent = v.toFixed(s.d);
+        const c = $("c_" + s.k);
+        c.textContent = d === 0 ? "Ideal" : low ? "Rendah" : "Tinggi";
+        c.className = "chip " + lvlClass(d);
+        if (d > 0) issues.push({ s, d, low });
+      });
+
+      const st = stressOf(latest, r);
+      const cls = st < 20 ? "ok" : st < 45 ? "warn" : "bad";
+      $("sv").textContent = Math.round(st);
+      $("sv").style.color = `var(--${cls})`;
+      $("sl").textContent = "Indeks stres tanah: " + (st < 20 ? "Rendah" : st < 45 ? "Sedang" : "Tinggi");
+      $("meter").style.width = Math.min(100, st) + "%";
+      $("meter").style.background = `var(--${cls})`;
+
+      $("diag").innerHTML = issues.length
+        ? issues.sort((a, b) => b.d - a.d).map((i) =>
+            `<p><strong class="${lvlClass(i.d)}">${i.s.n} ${i.low ? "rendah" : "tinggi"}.</strong> ${REC[i.s.k][i.low ? 0 : 1]}</p>`).join("")
+        : '<p><strong class="ok">Semua parameter ideal.</strong> Tidak perlu tindakan.</p>';
+    }
+
+    async function getJSON(path) {
+      const res = await fetch(FIREBASE_URL + path, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+
+    async function fetchLatest() {
+      if (simMode) return;
+      if (FIREBASE_URL.includes("NAMA-PROJECT")) {
+        setStatus(false, "Isi FIREBASE_URL di file ini terlebih dulu");
+        return;
+      }
+
+      try {
+        const o = await getJSON("/tanah.json");
+        if (simMode) return;
+        if (!valid(o)) {
+          setStatus(false, "Belum ada data dari alat");
+          return;
+        }
+
+        latest = o;
+        renderLatest();
+
+        const age = typeof o.ts === "number" ? Date.now() - o.ts : null;
+        const t = typeof o.ts === "number" ? new Date(o.ts).toLocaleTimeString("id-ID") : "";
+
+        if (age === null) setStatus(true, "Data diterima");
+        else if (age < ONLINE_MS) setStatus(true, `Alat online, data ${t}`);
+        else setStatus(false, `Alat offline, data terakhir ${t}`);
+      } catch (e) {
+        if (simMode) return;
+        setStatus(false, "Gagal membaca Firebase (" + e.message + "). Periksa URL, aturan database, dan internet.");
+      }
+    }
+
+    async function fetchHist() {
+      if (simMode) return;
+      if (FIREBASE_URL.includes("NAMA-PROJECT")) return;
+      try {
+        const obj = await getJSON('/riwayat.json?orderBy=%22$key%22&limitToLast=120');
+        if (simMode) return;
+        hist = obj ? Object.keys(obj).sort().map((k) => obj[k]).filter(valid) : [];
+        drawChart();
+      } catch (e) {
+        // opsional
+      }
+    }
+
+    function drawChart() {
+      const c = $("chart");
+      const dpr = window.devicePixelRatio || 1;
+      const w = c.clientWidth;
+      const h = c.clientHeight;
+      c.width = w * dpr;
+      c.height = h * dpr;
+      const g = c.getContext("2d");
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const css = getComputedStyle(document.documentElement);
+      const col = (n) => css.getPropertyValue(n).trim();
+      g.font = "12px system-ui, sans-serif";
+      g.fillStyle = col("--muted");
+
+      if (hist.length < 2) {
+        g.fillText("Belum cukup data riwayat.", 12, 24);
+        return;
+      }
+
+      const p = $("param").value;
+      const r = cropR();
+      const vals = hist.map((o) => (p === "stress" ? stressOf(o, r) : o[p]));
+      let lo = Math.min(...vals);
+      let hi = Math.max(...vals);
+
+      if (p === "stress") {
+        lo = 0;
+        hi = Math.max(hi, 50);
+      } else {
+        lo = Math.min(lo, r[p][0]);
+        hi = Math.max(hi, r[p][1]);
+      }
+
+      if (hi === lo) hi = lo + 1;
+
+      const L = 44, R = 12, T = 12, B = 22;
+      const X = (i) => L + (i * (w - L - R)) / (vals.length - 1);
+      const Y = (v) => T + (1 - (v - lo) / (hi - lo)) * (h - T - B);
+
+      if (p !== "stress") {
+        g.fillStyle = col("--ok");
+        g.globalAlpha = 0.15;
+        g.fillRect(L, Y(r[p][1]), w - L - R, Y(r[p][0]) - Y(r[p][1]));
+        g.globalAlpha = 1;
+      }
+
+      g.strokeStyle = col("--line");
+      g.beginPath();
+      g.moveTo(L, T); g.lineTo(L, h - B); g.lineTo(w - R, h - B); g.stroke();
+
+      g.fillStyle = col("--muted");
+      g.fillText(hi.toFixed(1), 4, T + 8);
+      g.fillText(lo.toFixed(1), 4, h - B);
+
+      const t0 = hist[0].ts;
+      const t1 = hist[hist.length - 1].ts;
+      if (typeof t0 === "number") {
+        g.fillText(new Date(t0).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }), L, h - 6);
+        g.textAlign = "right";
+        g.fillText(new Date(t1).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }), w - R, h - 6);
+        g.textAlign = "left";
+      }
+
+      g.strokeStyle = col("--accent");
+      g.lineWidth = 2;
+      g.beginPath();
+      vals.forEach((v, i) => {
+        const x = X(i);
+        const y = Y(v);
+        if (i === 0) g.moveTo(x, y);
+        else g.lineTo(x, y);
+      });
+      g.stroke();
+    }
+
+    function downloadCsv() {
+      if (!hist.length) { alert("Belum ada data riwayat."); return; }
+      const keys = SENS.map((s) => s.k);
+      const rows = [["waktu", ...keys].join(",")].concat(hist.map((o) => [typeof o.ts === "number" ? new Date(o.ts).toISOString() : "", ...keys.map((k) => o[k])].join(",")));
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([rows.join("\n")], { type: "text/csv" }));
+      a.download = "riwayat_tanah.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    async function analyzeAI() {
+      const out = $("aiOut");
+
+      if (!AI_URL || AI_URL.includes("NAMA-WORKER")) {
+        out.className = "ai err";
+        out.textContent = "Isi AI_URL dengan alamat Cloudflare Worker Anda.";
+        return;
+      }
+
+      if (!valid(latest)) {
+        out.className = "ai err";
+        out.textContent = "Belum ada data dari alat.";
+        return;
+      }
+
+      if (aiBusy) return;
+      aiBusy = true;
+      $("aiBtn").disabled = true;
+      out.className = "ai";
+      out.textContent = "AI sedang menganalisis...";
+
+      try {
+        const r = cropR();
+        const payload = {
+          crop: $("crop").value,
+          latest: pickData(latest),
+          stress: stressOf(latest, r),
+          history: hist.slice(-60)
+            .filter((_, i, a) => i % Math.max(1, Math.floor(a.length / 12)) === 0)
+            .slice(-12)
+            .map(pickData)
+        };
+        const res = await fetch(AI_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
+        out.textContent = data.analysis || "(Tidak ada jawaban)";
+        $("aiMeta").textContent = "Dianalisis " + new Date().toLocaleTimeString("id-ID");
+      } catch (e) {
+        out.className = "ai err";
+        const detail = location.protocol === "file:"
+          ? "Halaman dibuka langsung dari file (file://), sehingga koneksi AI diblokir oleh CORS. Jalankan dari folder proyek dengan `py -m http.server 8132`, lalu buka http://127.0.0.1:8132/tanahsehat_single.html."
+          : e.message === "Failed to fetch"
+            ? "Koneksi ke AI gagal. Periksa internet, pastikan URL Worker benar dan sudah di-deploy, serta domain halaman diizinkan pada ALLOWED_ORIGINS di Worker."
+            : e.message;
+        out.textContent = "Analisis gagal: " + detail;
+      } finally {
+        setTimeout(() => {
+          aiBusy = false;
+          $("aiBtn").disabled = false;
+        }, 15000);
+      }
+    }
+
+    $("aiBtn").onclick = analyzeAI;
+    $("aiAuto").onchange = (e) => {
+      clearInterval(aiTimer);
+      if (e.target.checked) {
+        analyzeAI();
+        aiTimer = setInterval(analyzeAI, 10 * 60 * 1000);
+      }
+    };
+
+    if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    }
+
+    buildUI();
+    fetchLatest();
+    fetchHist();
+    setInterval(fetchLatest, POLL_MS);
+    setInterval(fetchHist, HIST_MS);
+  </script>
+</body>
+</html>

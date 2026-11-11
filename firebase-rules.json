@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "tanah":   { ".read": true, ".write": "auth != null" },
+    "riwayat": { ".read": true, ".write": "auth != null", ".indexOn": ["ts"] }
+  }
+}
